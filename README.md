@@ -109,9 +109,19 @@ If you use this code or data, please cite the paper and the archived repository:
   year    = {2026},
   note    = {Manuscript in preparation}
 }
+
+@software{yanytska2026code,
+  author    = {Yanytska, Lesia},
+  title     = {Detection limits of MES-embedded carbon-intensity monitoring: simulation code and data},
+  year      = {2026},
+  publisher = {Zenodo},
+  version   = {v1.0.0},
+  doi       = {10.5281/zenodo.20634188},
+  url       = {https://doi.org/10.5281/zenodo.20634188}
+}
 ```
 
-A machine-readable `CITATION.cff` is included at the repository root. On the first tagged release, enable the GitHub–Zenodo integration to mint a DOI for the archived snapshot, then add it here and to the paper.
+This release is permanently archived on Zenodo: **DOI [10.5281/zenodo.20634188](https://doi.org/10.5281/zenodo.20634188)**. A machine-readable `CITATION.cff` is included at the repository root.
 
 ---
 
