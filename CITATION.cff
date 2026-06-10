@@ -1,0 +1,20 @@
+cff-version: 1.2.0
+message: "If you use this software or data, please cite the paper and this repository."
+title: "Detection limits of MES-embedded carbon-intensity monitoring: simulation code and data"
+authors:
+  - family-names: Yanytska
+    given-names: Lesia
+    affiliation: "Independent Researcher"
+version: 1.0.0
+date-released: 2026-06-10
+license: MIT
+repository-code: "https://github.com/lesiayanytska78/ci-monitoring-simulation"
+preferred-citation:
+  type: article
+  title: "Detection limits of MES-embedded carbon-intensity monitoring for energy anomalies: a calibrated simulation study in machining-style processes"
+  authors:
+    - family-names: Yanytska
+      given-names: Lesia
+  year: 2026
+  journal: "[journal name]"
+  doi: "[paper DOI]"
