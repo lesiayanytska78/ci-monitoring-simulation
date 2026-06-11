@@ -1,5 +1,9 @@
 # Detection limits of MES-embedded carbon-intensity monitoring
 
+[![tests](https://github.com/lesiayanytska78/ci-monitoring-simulation/actions/workflows/tests.yml/badge.svg)](https://github.com/lesiayanytska78/ci-monitoring-simulation/actions/workflows/tests.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.20634188.svg)](https://doi.org/10.5281/zenodo.20634188)
+
 Simulation code, raw sweep data, and figure-generation scripts for the paper:
 
 > **Yanytska, L. (2026).** *Detection limits of MES-embedded carbon-intensity monitoring for energy anomalies: a calibrated simulation study in machining-style processes.* Manuscript in preparation.
@@ -25,6 +29,19 @@ python plot_paper_figs.py
 ```
 
 Expected output: seven PNGs written to `figures/`. Wall time on a single CPU core: under one minute. `plot_paper_figs.py` reads only the CSVs in `data/` and writes only to `figures/` — it does not require the simulation modules.
+
+A `Makefile` provides shortcuts: `make install`, `make figures`, `make test`.
+
+## Tests
+
+A `pytest` suite in `tests/` exercises the full pipeline end to end — the energy substrate, carbon layer, anomaly model, the deployed detector, and the proposed event-anchored + CUSUM detector — and includes a regression test for the paper's headline result (the fixed-reference detector fires on a slow ramp the deployed detector misses) and an integrity check that the released CSVs load and the shared simulation modules do not drift between `simulation/` and `paper2_anchored_detector/`. Run with:
+
+```bash
+pip install -r requirements.txt pytest
+pytest -q
+```
+
+Continuous integration runs the suite on Python 3.9, 3.11, and 3.12 on every push (see the badge above).
 
 ### Re-running the simulations from scratch (optional)
 
