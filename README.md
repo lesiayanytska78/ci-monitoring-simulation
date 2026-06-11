@@ -1,8 +1,10 @@
 # Detection limits of MES-embedded carbon-intensity monitoring
 
 [![tests](https://github.com/lesiayanytska78/ci-monitoring-simulation/actions/workflows/tests.yml/badge.svg)](https://github.com/lesiayanytska78/ci-monitoring-simulation/actions/workflows/tests.yml)
+[![PyPI](https://img.shields.io/pypi/v/ci-monitoring-simulation.svg)](https://pypi.org/project/ci-monitoring-simulation/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.20634187.svg)](https://doi.org/10.5281/zenodo.20634187)
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/lesiayanytska78/ci-monitoring-simulation/blob/main/notebooks/quickstart.ipynb)
 
 Simulation code, raw sweep data, and figure-generation scripts for the paper:
 
@@ -19,6 +21,8 @@ This repository reproduces every figure in the paper from the 4,056 raw simulati
 The simulation framework (Modules 1–5) and the proposed detector are available as an installable package, `cimonitoring`:
 
 ```bash
+pip install ci-monitoring-simulation
+# or, the latest development version straight from GitHub:
 pip install git+https://github.com/lesiayanytska78/ci-monitoring-simulation.git
 # or, from a local clone:
 pip install .
