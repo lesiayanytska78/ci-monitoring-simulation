@@ -324,5 +324,5 @@ if __name__ == "__main__":
     print("=== Monitoring layer (Module 4) ===")
     print(json.dumps({"config": m_cfg.__dict__, "evaluation": ev}, indent=2, default=str))
 
-    obs.to_csv("/home/claude/monitoring_output.csv", index=False)
+    obs.to_csv("monitoring_output.csv", index=False)
     print("\nSaved observed signal + alerts -> monitoring_output.csv")

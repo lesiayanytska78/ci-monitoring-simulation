@@ -43,6 +43,10 @@ Each `run_*` script reuses the parent repo's Module 1–5 (copied here so the sc
 run with no path setup) plus `monitoring_anchored.py`, and writes its summary CSV to
 `results/`. Pre-computed summaries and figures are included.
 
+> **Note on `sensitivity.py`:** this is the companion paper's (Paper 1) sweep harness for the *deployed* rule-based detector; it is included only because the analysis scripts import the Module 1–5 package. It does **not** characterise the proposed detector. The proposed detector's own parameters (anchor cadence, post-anchor window, CUSUM slack `k`, decision interval `h`, and the health-gate fraction) are not swept here — that sensitivity analysis is identified as future work in the manuscript.
+>
+> **Note on the ablation comparator `C2`:** in `run_paper2_comparators.py`, `C2` is a fixed *global-mean* reference (the median healthy CI, a single calibration constant). It is a deliberately minimal fixed reference used to test whether a fixed reference *per se* defeats inertia; it is **not** a feature-conditioned, Bhinge-style model-based residual, and should not be read as one.
+
 ## Real-data validation (Brillinger et al. 2025) — license note
 
 The Level-2 validation replays **real measured CNC spindle power** as the substrate

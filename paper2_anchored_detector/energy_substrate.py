@@ -17,7 +17,7 @@ total power = auxiliary base load
 This base-load-plus-production-correlated decomposition is the canonical
 machine-tool energy model of Gutowski et al. (2006), and it is independently
 confirmed by the per-axis energy breakdown in the open Brillinger et al. (2025)
-CNC machining dataset (Mendeley Data, DOI 10.17632/gtvvwmz7r7.2, CC BY 4.0),
+CNC machining dataset (Mendeley Data, DOI 10.17632/gtvvwmz7r7.2, CC BY-NC),
 which separates a distinct spindle energy component (ENERGY|S).
 
 Calibration status (Option B - "grounded in, not surgically fitted to")
@@ -271,5 +271,5 @@ if __name__ == "__main__":
     df = simulate_work_center(cfg)
     print("=== Energy substrate v2 (calibrated): one work center, 24 h ===")
     print(json.dumps(summarise(df, cfg), indent=2))
-    df.to_csv("/home/claude/energy_substrate_output.csv", index=False)
+    df.to_csv("energy_substrate_output.csv", index=False)
     print("\nSaved per-second trace -> energy_substrate_output.csv")

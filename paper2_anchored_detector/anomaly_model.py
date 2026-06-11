@@ -223,5 +223,5 @@ if __name__ == "__main__":
     df = inject_anomalies(substrate, cfg)
     print("=== Anomaly model (Module 3): single compressed-air leak ===")
     print(json.dumps(summarise(df, cfg), indent=2))
-    df.to_csv("/home/claude/anomaly_model_output.csv", index=False)
+    df.to_csv("anomaly_model_output.csv", index=False)
     print("\nSaved substrate-with-anomaly trace -> anomaly_model_output.csv")

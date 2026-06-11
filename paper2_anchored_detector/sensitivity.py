@@ -360,37 +360,37 @@ if __name__ == "__main__":
     severities1 = [0.5, 0.75, 1.0, 1.25, 1.5, 1.75, 2.0, 2.5, 3.0, 4.0]
     durations1 = [30, 120, 240]
     df1 = sweep_severity_x_duration(severities1, durations1, n_seeds=10)
-    df1.to_csv("/home/claude/sweep1_latency.csv", index=False)
+    df1.to_csv("../data/sweep1_latency.csv", index=False)
     print(f"   -> {len(df1)} runs saved")
 
     print("\n[2/6] detection rate vs severity, per sampling rate")
     severities2 = [0.5, 0.75, 1.0, 1.5, 2.0, 3.0]
     samplings2 = [30, 60, 300, 900]
     df2 = sweep_severity_x_sampling(severities2, samplings2, n_seeds=10, duration_min=240)
-    df2.to_csv("/home/claude/sweep2_sampling.csv", index=False)
+    df2.to_csv("../data/sweep2_sampling.csv", index=False)
     print(f"   -> {len(df2)} runs saved")
 
     print("\n[3/6] ROC - relative-threshold tightness sweep")
     thresholds3 = [5, 8, 10, 12, 15, 20, 25, 30, 40, 50, 75, 100]
     df3 = sweep_roc(thresholds3, n_seeds=10, severity_kw=1.5, duration_min=240)
-    df3.to_csv("/home/claude/sweep3_roc.csv", index=False)
+    df3.to_csv("../data/sweep3_roc.csv", index=False)
     print(f"   -> {len(df3)} runs saved")
 
     print("\n[4/6] cross-archetype generalisation")
     severities4 = [0.5, 0.75, 1.0, 1.5, 2.0, 3.0]
     df4 = sweep_archetypes(severities4, n_seeds=10)
-    df4.to_csv("/home/claude/sweep4_archetypes.csv", index=False)
+    df4.to_csv("../data/sweep4_archetypes.csv", index=False)
     print(f"   -> {len(df4)} runs saved")
 
     print("\n[5/6] threshold-type comparison")
     df5 = sweep_threshold_types(n_seeds=8, severity_kw=1.5, duration_min=240)
-    df5.to_csv("/home/claude/sweep5_threshold_types.csv", index=False)
+    df5.to_csv("../data/sweep5_threshold_types.csv", index=False)
     print(f"   -> {len(df5)} runs saved")
 
     print("\n[6/6] attribution accuracy by severity and channel")
     severities6 = [0.5, 0.75, 1.0, 1.5, 2.0, 3.0, 4.0]
     df6 = sweep_attribution(severities6, channels=("machine", "spindle"), n_seeds=10)
-    df6.to_csv("/home/claude/sweep6_attribution.csv", index=False)
+    df6.to_csv("../data/sweep6_attribution.csv", index=False)
     print(f"   -> {len(df6)} runs saved")
 
     elapsed = time.time() - t0

@@ -168,5 +168,5 @@ if __name__ == "__main__":
     print("=== Carbon layer (Module 2): one work center, 24 h ===")
     print(json.dumps(summarise(df, c_cfg), indent=2))
 
-    df.to_csv("/home/claude/carbon_layer_output.csv", index=False)
+    df.to_csv("carbon_layer_output.csv", index=False)
     print("\nSaved per-second trace -> carbon_layer_output.csv")

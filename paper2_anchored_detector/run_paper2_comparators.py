@@ -170,7 +170,7 @@ def main():
     lab = {"D0_deployed": "D0  deployed (rolling threshold)",
            "C1_rolling_cusum": "C1  rolling-median + CUSUM  (no anchor)",
            "D2_anchored_cusum": "D2  anchored + CUSUM  (proposed)",
-           "C2_model_residual": "C2  model-predicted CI + CUSUM  (Bhinge-style)"}
+           "C2_model_residual": "C2  fixed global-mean CI + CUSUM"}
     fig, ax = plt.subplots(figsize=(8, 5.6))
     for c in CONFIGS:
         d = summ[summ.config == c].sort_values("onset_ratio")
