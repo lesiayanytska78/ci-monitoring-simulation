@@ -16,6 +16,15 @@ This repository reproduces every figure in the paper from the 4,056 raw simulati
 
 ---
 
+## Try it first (no install)
+
+The fastest way to see the headline result is the **[Colab quickstart notebook](https://colab.research.google.com/github/lesiayanytska78/ci-monitoring-simulation/blob/main/notebooks/quickstart.ipynb)** — it runs entirely in your browser with nothing to install. Open it, choose *Runtime ▸ Run all*, and you'll reproduce the result in about a minute.
+
+## Requirements (for local use)
+
+- **Python 3.9 or newer.** Check yours with `python3 --version`. If you don't have Python, install it from [python.org](https://www.python.org/downloads/) (macOS/Windows) or your package manager. `pip` ships with Python 3.4+; if `pip` is somehow missing, run `python3 -m ensurepip --upgrade`.
+- Dependencies (`numpy`, `pandas`, `matplotlib`) install automatically with the package below — you don't need to install them by hand.
+
 ## Install
 
 The simulation framework (Modules 1–5) and the proposed detector are available as an installable package, `cimonitoring`:
@@ -27,6 +36,12 @@ pip install git+https://github.com/lesiayanytska78/ci-monitoring-simulation.git
 # or, from a local clone:
 pip install .
 ```
+
+> **Tip:** to keep this isolated from your other Python projects, create a virtual environment first:
+> ```bash
+> python3 -m venv venv && source venv/bin/activate   # Windows: venv\Scripts\activate
+> pip install ci-monitoring-simulation
+> ```
 
 ```python
 import cimonitoring as ci
