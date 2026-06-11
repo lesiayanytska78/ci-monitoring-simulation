@@ -1,0 +1,38 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "ci-monitoring-simulation"
+version = "2.2.0"
+description = "Calibrated simulation and detectors for MES-embedded carbon-intensity monitoring of energy anomalies in machining-style processes."
+readme = "README.md"
+requires-python = ">=3.9"
+license = { text = "MIT" }
+authors = [{ name = "Lesia Yanytska", email = "lesiayanytska@gmail.com" }]
+keywords = [
+    "carbon-intensity", "manufacturing", "MES", "anomaly-detection",
+    "CUSUM", "change-detection", "CNC", "energy-monitoring",
+]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    "Intended Audience :: Science/Research",
+    "Topic :: Scientific/Engineering",
+]
+dependencies = [
+    "numpy>=1.23",
+    "pandas>=1.5",
+    "matplotlib>=3.6",
+]
+
+[project.optional-dependencies]
+test = ["pytest"]
+
+[project.urls]
+Homepage = "https://github.com/lesiayanytska78/ci-monitoring-simulation"
+Repository = "https://github.com/lesiayanytska78/ci-monitoring-simulation"
+DOI = "https://doi.org/10.5281/zenodo.20634188"
+
+[tool.setuptools]
+packages = ["cimonitoring"]
