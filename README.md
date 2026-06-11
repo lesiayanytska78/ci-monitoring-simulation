@@ -6,6 +6,8 @@ Simulation code, raw sweep data, and figure-generation scripts for the paper:
 
 This repository reproduces every figure in the paper from the 4,056 raw simulation runs released in `data/`.
 
+> **Companion method (Paper 2):** the [`paper2_anchored_detector/`](paper2_anchored_detector/) folder contains the proposed *event-anchored + residual-CUSUM* detector that closes the adaptive-baseline inertia blind spot characterised in this study, together with its full evaluation — the operating-point calibration, the detector ablation, generalisation across severity, and validation on **real** Brillinger spindle-power traces. See that folder's README.
+
 ---
 
 ## Quick reproduction

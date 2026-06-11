@@ -4,7 +4,8 @@ title: "Detection limits of MES-embedded carbon-intensity monitoring: simulation
 authors:
   - family-names: Yanytska
     given-names: Lesia
-    affiliation: "Independent Researcher"
+    affiliation: "Luxoft USA Inc., Chicago, IL, USA"
+    orcid: "https://orcid.org/0009-0007-1728-8599"
 version: 1.0.0
 date-released: 2026-06-10
 license: MIT
@@ -17,5 +18,5 @@ preferred-citation:
     - family-names: Yanytska
       given-names: Lesia
   year: 2026
-  journal: "[journal name]"
+  journal: "[journal — to be determined]"
   doi: "[paper DOI]"
