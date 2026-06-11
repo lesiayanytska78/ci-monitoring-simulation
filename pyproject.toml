@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "ci-monitoring-simulation"
-version = "2.2.1"
+version = "2.2.2"
 description = "Calibrated simulation and detectors for MES-embedded carbon-intensity monitoring of energy anomalies in machining-style processes."
 readme = "README.md"
 requires-python = ">=3.9"
