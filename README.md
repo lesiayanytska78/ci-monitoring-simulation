@@ -2,7 +2,7 @@
 
 [![tests](https://github.com/lesiayanytska78/ci-monitoring-simulation/actions/workflows/tests.yml/badge.svg)](https://github.com/lesiayanytska78/ci-monitoring-simulation/actions/workflows/tests.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
-[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.20634188.svg)](https://doi.org/10.5281/zenodo.20634188)
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.20634187.svg)](https://doi.org/10.5281/zenodo.20634187)
 
 Simulation code, raw sweep data, and figure-generation scripts for the paper:
 
@@ -11,6 +11,32 @@ Simulation code, raw sweep data, and figure-generation scripts for the paper:
 This repository reproduces every figure in the paper from the 4,056 raw simulation runs released in `data/`.
 
 > **Companion method (Paper 2):** the [`paper2_anchored_detector/`](paper2_anchored_detector/) folder contains the proposed *event-anchored + residual-CUSUM* detector that closes the adaptive-baseline inertia blind spot characterised in this study, together with its full evaluation — the operating-point calibration, the detector ablation, generalisation across severity, and validation on **real** Brillinger spindle-power traces. See that folder's README.
+
+---
+
+## Install
+
+The simulation framework (Modules 1–5) and the proposed detector are available as an installable package, `cimonitoring`:
+
+```bash
+pip install git+https://github.com/lesiayanytska78/ci-monitoring-simulation.git
+# or, from a local clone:
+pip install .
+```
+
+```python
+import cimonitoring as ci
+sub = ci.simulate_work_center(ci.Config(seed=1))
+sub = ci.inject_anomalies(sub, ci.AnomalyConfig([
+    ci.AnomalySpec(onset_hour=10, duration_minutes=240, magnitude_kw=2.0,
+                   onset_profile="ramp", onset_ramp_seconds=3600,
+                   affects="spindle", label="slow ramp")]))
+obs = ci.run_monitoring_anchored(
+    sub, ci.AnchoredMonitorConfig(detector="anchored_cusum"),
+    ci.CarbonConfig().static_emission_factor_kg_per_kwh)
+```
+
+The figure-reproduction below reads the released CSVs and does not require installation.
 
 ---
 
@@ -135,12 +161,12 @@ If you use this code or data, please cite the paper and the archived repository:
   year      = {2026},
   publisher = {Zenodo},
   version   = {v1.0.0},
-  doi       = {10.5281/zenodo.20634188},
-  url       = {https://doi.org/10.5281/zenodo.20634188}
+  doi       = {10.5281/zenodo.20634187},
+  url       = {https://doi.org/10.5281/zenodo.20634187}
 }
 ```
 
-This release is permanently archived on Zenodo: **DOI [10.5281/zenodo.20634188](https://doi.org/10.5281/zenodo.20634188)**. A machine-readable `CITATION.cff` is included at the repository root.
+This release is permanently archived on Zenodo: **DOI [10.5281/zenodo.20634187](https://doi.org/10.5281/zenodo.20634187)**. A machine-readable `CITATION.cff` is included at the repository root.
 
 ---
 

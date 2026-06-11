@@ -32,7 +32,7 @@ test = ["pytest"]
 [project.urls]
 Homepage = "https://github.com/lesiayanytska78/ci-monitoring-simulation"
 Repository = "https://github.com/lesiayanytska78/ci-monitoring-simulation"
-DOI = "https://doi.org/10.5281/zenodo.20634188"
+DOI = "https://doi.org/10.5281/zenodo.20634187"
 
 [tool.setuptools]
 packages = ["cimonitoring"]
