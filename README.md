@@ -8,9 +8,9 @@
 
 Simulation code, raw sweep data, and figure-generation scripts for the paper:
 
-> **Yanytska, L. (2026).** *Detection limits of MES-embedded carbon-intensity monitoring for energy anomalies: a calibrated simulation study in machining-style processes.* Manuscript in review.
+> **Yanytska, L. (2026).** *Detection limits of MES-embedded carbon-intensity monitoring for energy anomalies: a calibrated simulation study in machining-style processes.* Manuscript in preparation.
 
-This repository reproduces every figure in the paper from the 4,056 raw simulation runs released in `data/`.
+This repository reproduces every figure in the paper from the 4,356 raw simulation runs released in `data/`.
 
 > **Companion method (Paper 2):** the [`paper2_anchored_detector/`](paper2_anchored_detector/) folder contains the proposed *event-anchored + residual-CUSUM* detector that closes the adaptive-baseline inertia blind spot characterised in this study, together with its full evaluation — the operating-point calibration, the detector ablation, generalisation across severity, and validation on **real** Brillinger spindle-power traces. See that folder's README.
 
@@ -112,14 +112,14 @@ The five simulation modules live in `simulation/`. The sweep functions that prod
 │   ├── monitoring.py                          Module 4 — MES/SCADA sensor + rule-based detector
 │   └── sensitivity.py                         Module 5 — sensitivity-sweep harness
 │
-├── data/                                      raw per-run results (4,056 rows total)
+├── data/                                      raw per-run results (4,356 rows total)
 │   ├── sweep1_latency.csv                     severity × duration (300 runs)
 │   ├── sweep2_sampling.csv                    severity × meter cadence (240)
 │   ├── sweep3_roc.csv                         relative-threshold tightness (240)
 │   ├── sweep4_archetypes.csv                  severity × four archetypes (240)
 │   ├── sweep5_threshold_types.csv             absolute / relative / statistical (496)
 │   ├── sweep6_attribution.csv                 severity × affected channel (140)
-│   ├── sweep7_ramp_time.csv                   ramp time × severity, coarse (350)
+│   ├── sweep7_ramp_time.csv                   severity × ramp time × seed (650)
 │   ├── sweep8_boundary.csv                    50-seed boundary, 1.0–2.0 kW (250)
 │   └── sweep9_ramp_transition_200seed.csv     200-seed fine transition (1,800)
 │
@@ -128,6 +128,60 @@ The five simulation modules live in `simulation/`. The sweep functions that prod
 └── docs/
     └── parameter_provenance.md                full [ANCHORED]/[LITERATURE]/[ASSUMPTION] table
 ```
+
+---
+
+## Architecture
+
+The system is a **layered simulation pipeline**: each stage produces a `pandas.DataFrame` that the next consumes, so any stage can be inspected, swapped, or re-run in isolation. The same observed signal is fed to two interchangeable detectors — the deployed adaptive-baseline detector and the proposed event-anchored detector — which makes the head-to-head comparison a controlled experiment rather than two separate runs.
+
+```mermaid
+flowchart TD
+    CFG["Config<br/>simulation parameters (seed, shift hours, power levels)"]
+    CFG --> M1
+
+    M1["Module 1 — energy_substrate.py<br/>simulate_work_center()<br/>per-second power = aux base + spindle idle + cutting increment<br/>(Gutowski decomposition; anchored to Brillinger 2025)"]
+    M1 --> M3
+    M1 --> M2
+
+    M2["Module 2 — carbon_layer.py<br/>compute_carbon_layer()<br/>defines the monitoring metric: rolling CI per piece (kg CO2e/piece)"]
+
+    M3["Module 3 — anomaly_model.py<br/>inject_anomalies()<br/>additive excess power, 4 archetypes, with ground truth"]
+    M3 --> SENSOR
+
+    SENSOR{"shared sensor model<br/>sample_and_noise()<br/>downsample + meter noise → observed CI per piece"}
+    M2 -. metric definition .-> SENSOR
+
+    SENSOR --> M4
+    SENSOR --> M4B
+
+    M4["Module 4 — monitoring.py<br/>run_monitoring() — DEPLOYED<br/>rolling baseline + threshold + persistence + attribution"]
+    M4B["Module 4b — monitoring_anchored.py<br/>run_monitoring_anchored() — PROPOSED<br/>event-anchored held baseline + residual CUSUM"]
+
+    M4 --> EVAL
+    M4B --> EVAL
+
+    EVAL["evaluate()<br/>scores alerts vs ground truth:<br/>detection latency, TP/FP, attribution correctness"]
+    EVAL --> M5
+
+    M5["Module 5 — sensitivity.py<br/>sweep harness — 9 parameter sweeps, 4,356 runs"]
+    M5 --> DATA["data/*.csv<br/>raw per-run results (authoritative)"]
+    DATA --> FIGS["plot_paper_figs.py → figures/<br/>regenerates every paper figure from data/"]
+```
+
+The key design property is the **shared sensor stage**: `sample_and_noise()` lives in Module 4 and is reused unchanged by Module 4b, so both detectors see the *identical* observed signal and any difference in detection performance is attributable to the detection logic alone.
+
+| Layer | File | Responsibility | Key public API |
+|---|---|---|---|
+| Module 1 — Energy substrate | `energy_substrate.py` | Per-second power for one work center: auxiliary base + spindle no-load + cutting increment (engaged only while cutting). Structure follows Gutowski et al. (2006); the no-load spindle range is anchored to the Brillinger et al. (2025) CNC dataset. | `Config`, `simulate_work_center()` |
+| Module 2 — Carbon layer | `carbon_layer.py` | Layer emissions and carbon intensity. Defines the central monitoring signal — **rolling CI per piece** — which rises when energy climbs but output does not. | `CarbonConfig`, `compute_carbon_layer()` |
+| Module 3 — Anomaly model | `anomaly_model.py` | Inject parametrized faults as additive excess power with no extra output, recording exact onset/magnitude/duration as **ground truth**. Four archetypes. | `AnomalyConfig`, `AnomalySpec`, `inject_anomalies()` |
+| Module 4 — Monitoring (deployed) | `monitoring.py` | Model the MES/SCADA view (downsampled, noisy), then the deployed detector: rolling baseline + threshold + tiered persistence + attribution. Includes the evaluation scorer. | `MonitorConfig`, `run_monitoring()`, `sample_and_noise()`, `evaluate()` |
+| Module 4b — Monitoring (proposed) | `monitoring_anchored.py` | The proposed detector closing the inertia blind spot: **event-anchored held baseline** + **residual CUSUM** on the dimensionless residual. Reuses Module 4's sensor model for a controlled comparison. | `AnchoredMonitorConfig`, `run_monitoring_anchored()` |
+| Module 5 — Sensitivity harness | `sensitivity.py` | Run the substrate → anomaly → monitor → evaluate pipeline across parameter sweeps; write raw per-run results to CSV. No tuning to targets. | sweep functions |
+| Reproduction | `plot_paper_figs.py` | Regenerate every figure purely from the released CSVs (no simulation modules required). | — |
+
+An interactive version of this diagram (clickable components, flow overlay, themes) is in `architecture.html`, and a fuller write-up with design rationale and extension points is in `ARCHITECTURE.md`.
 
 ---
 

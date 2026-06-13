@@ -1,0 +1,8 @@
+{
+  "demo_warning_latency_min": 47,
+  "demo_critical_latency_min": 56,
+  "demo_false_positives": 0,
+  "deployed_detected": false,
+  "n_runs": 4356,
+  "n_sweeps": 9
+}

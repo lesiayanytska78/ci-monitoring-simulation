@@ -1,0 +1,629 @@
+<html lang="en" data-theme="paper"><head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CI Monitoring — Pipeline Architecture</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,600;0,9..144,800;1,9..144,300&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#f0ece3; --surface:#ffffff; --border:#ccc5b4; --border2:#b8b0a0;
+  --ink:#1a1612; --dim:#7a7060;
+  --blue:#1a4f8a;   --blue-lt:#e8f0fb;  --blue-mid:#bed0ef;
+  --teal:#1a7f75;   --teal-lt:#e4f4f2;  --teal-mid:#b4dbd6;
+  --green:#1d7a4e;  --green-lt:#e8f5ee; --green-mid:#a8d4bb;
+  --amber:#b5520e;  --amber-lt:#fdf0e4; --amber-mid:#f0d0b0;
+  --purple:#5b4a8a; --purple-lt:#ece9f6;--purple-mid:#d6d0ee;
+  --gold:#8a6a00;   --gold-lt:#fef9e7;
+  --red:#c0392b;    --red-lt:#fdecea;
+  --r:5px; --shadow:0 1px 4px rgba(26,22,18,.10);
+}
+html[data-theme="paper"]{--bg:#f8f6f0;--surface:#fffefb;--border:#ddd8cc;--border2:#ccc5b5;--ink:#2a2420;--dim:#8a8070;}
+html[data-theme="word"]{--bg:#ffffff;--surface:#ffffff;--border:#c8c8c8;--border2:#a0a0a0;--ink:#000000;--dim:#505050;--blue:#1a4a8a;--blue-lt:#eef3fb;--blue-mid:#a8c0e0;--teal:#105848;--teal-lt:#eaf4f0;--teal-mid:#80c0b0;--purple:#3a2870;--purple-lt:#edeafb;--purple-mid:#b8aee0;--amber:#7a3000;--amber-lt:#fdf0e4;--amber-mid:#d8a870;--green:#1a5020;--green-lt:#eaf4ec;--green-mid:#80c090;}
+html[data-theme="slate"]{--bg:#e8eaed;--surface:#f4f5f7;--border:#c0c6d0;--border2:#a8b0bc;--ink:#1c2330;--dim:#5a6478;--blue:#3558a8;--blue-lt:#d8e0f0;--blue-mid:#a0b4d8;--teal:#1a7888;--teal-lt:#d0eef4;--teal-mid:#8cccd8;--purple:#6048a0;--purple-lt:#e4def8;--purple-mid:#c0b0e0;--amber:#9a5808;--amber-lt:#f5e8d0;--amber-mid:#d8b878;--green:#1a7040;--green-lt:#d4f0e4;--green-mid:#80c8a0;}
+html[data-theme="forest"]{--bg:#e8f0e4;--surface:#f4f8f2;--border:#b8ccb0;--border2:#a0b898;--ink:#1a2818;--dim:#5a7048;--blue:#2a5a8a;--blue-lt:#d8e8f8;--blue-mid:#a8c4e0;--teal:#1a8068;--teal-lt:#d4f0e8;--teal-mid:#90d0c0;--purple:#5a4888;--purple-lt:#e8e0f8;--purple-mid:#c0b0e8;--amber:#a04808;--amber-lt:#f8e8d0;--amber-mid:#e0c090;}
+html[data-theme="maritime"]{--bg:#0d1b2a;--surface:#162040;--border:#2a3a5c;--border2:#3a4a6c;--ink:#e2e8f0;--dim:#8899bb;--blue:#3b82f6;--blue-lt:#1e3a5f;--blue-mid:#2a4a7a;--teal:#10b981;--teal-lt:#0f3d32;--teal-mid:#1a5a4a;--purple:#8b5cf6;--purple-lt:#2a1f4a;--purple-mid:#3a2f6a;--amber:#f59e0b;--amber-lt:#3a2a10;--amber-mid:#5a4020;--green:#10b981;--green-lt:#0f3d32;--green-mid:#1a5a4a;--red:#ef4444;--red-lt:#3a1515;--shadow:0 2px 8px rgba(0,0,0,.4);}
+html[data-theme="maritime"] body::before{background-image:linear-gradient(rgba(59,130,246,.06) 1px,transparent 1px),linear-gradient(90deg,rgba(59,130,246,.06) 1px,transparent 1px);}
+html[data-theme="maritime"] .panel-hdr{background:#1e3a5f;}
+
+*{box-sizing:border-box;margin:0;padding:0;}
+body{background:var(--bg);color:var(--ink);font-family:'DM Mono',monospace;font-size:11px;}
+body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
+  background-image:linear-gradient(rgba(26,79,138,.025) 1px,transparent 1px),linear-gradient(90deg,rgba(26,79,138,.025) 1px,transparent 1px);
+  background-size:40px 40px;}
+
+.page{position:relative;z-index:1;max-width:1500px;margin:0 auto;display:flex;flex-direction:row;align-items:flex-start;gap:0;}
+
+/* SIDEBAR */
+.sidebar{width:44px;flex-shrink:0;display:flex;flex-direction:column;align-items:center;padding:14px 0 20px;gap:6px;background:var(--surface);border-right:1px solid var(--border);min-height:100vh;position:sticky;top:0;}
+.sb-title{writing-mode:vertical-rl;transform:rotate(180deg);font-family:'Fraunces',serif;font-size:11px;font-weight:800;color:var(--ink);letter-spacing:-.2px;line-height:1.2;margin-bottom:10px;white-space:nowrap;max-height:240px;overflow:hidden;}
+.sb-title em{color:var(--blue);font-style:normal;}
+.sb-div{width:26px;height:1px;background:var(--border);margin:4px 0;flex-shrink:0;}
+.sb-label{font-size:6.5px;letter-spacing:1.5px;text-transform:uppercase;color:var(--dim);writing-mode:vertical-rl;transform:rotate(180deg);margin:2px 0;}
+.btn{display:flex;align-items:center;justify-content:center;padding:7px 6px;border-radius:4px;font-family:'DM Mono',monospace;font-size:9px;font-weight:500;border:1px solid var(--border);background:var(--surface);color:var(--ink);cursor:pointer;transition:all .15s;white-space:nowrap;width:32px;writing-mode:horizontal-tb;}
+.btn:hover{background:var(--blue-lt);border-color:var(--blue-mid);color:var(--blue);}
+select.btn{appearance:none;-webkit-appearance:none;writing-mode:vertical-lr;transform:rotate(180deg);padding:8px 4px;height:auto;font-size:8px;}
+.filters{display:flex;flex-direction:column;align-items:center;gap:3px;}
+.fpill{padding:5px 5px;font-size:7.5px;min-width:30px;text-align:center;border-radius:4px;font-family:'DM Mono',monospace;font-weight:500;border:1px solid var(--border);background:var(--surface);color:var(--dim);cursor:pointer;transition:all .15s;}
+.fp-sim.active{background:var(--blue-lt);border-color:var(--blue-mid);color:var(--blue);}
+.fp-detect.active{background:var(--teal-lt);border-color:var(--teal-mid);color:var(--teal);}
+.fp-repro.active{background:var(--purple-lt);border-color:var(--purple-mid);color:var(--purple);}
+.fp-all.active{background:var(--ink);border-color:var(--ink);color:var(--bg);}
+.fpill.inactive{opacity:.4;}
+
+/* CONTENT */
+.content{flex:1;padding:16px 22px 40px 18px;min-width:0;}
+.hdr h1{font-family:'Fraunces',serif;font-size:clamp(14px,1.5vw,21px);font-weight:800;letter-spacing:-.3px;line-height:1.2;}
+.hdr h1 em{color:var(--blue);font-style:normal;}
+.hdr-sub{font-size:8px;color:var(--dim);letter-spacing:2px;margin-top:3px;margin-bottom:16px;text-transform:uppercase;}
+
+.lv3-outer{display:flex;gap:18px;align-items:flex-start;}
+.lv3-center{flex:1;min-width:0;display:flex;flex-direction:column;}
+
+/* ZONES */
+.zone{border-radius:8px;border:1.5px solid;position:relative;padding:14px 10px 10px;margin-top:8px;}
+.zone-label{position:absolute;top:-10px;left:50%;transform:translateX(-50%);font-size:9px;font-weight:500;letter-spacing:1.5px;text-transform:uppercase;background:var(--bg);padding:0 10px;white-space:nowrap;}
+.z-pres{border-color:var(--blue);background:var(--blue-lt);} .z-pres .zone-label{color:var(--blue);}
+.z-svc{border-color:var(--blue);background:var(--blue-lt);} .z-svc .zone-label{color:var(--blue);}
+.z-int{border-color:var(--teal);background:var(--teal-lt);} .z-int .zone-label{color:var(--teal);}
+.z-ext{border-color:var(--amber);background:var(--amber-lt);} .z-ext .zone-label{color:var(--amber);}
+.z-data{border-color:var(--blue);background:var(--blue-lt);} .z-data .zone-label{color:var(--blue);}
+.z-infra{border-color:var(--purple);background:var(--purple-lt);} .z-infra .zone-label{color:var(--purple);}
+.zone-toggle{position:absolute;top:-9px;right:8px;width:16px;height:16px;border-radius:50%;background:var(--bg);border:1px solid var(--border2);font-size:11px;line-height:14px;text-align:center;cursor:pointer;color:var(--dim);z-index:10;display:flex;align-items:center;justify-content:center;user-select:none;}
+.zone-toggle:hover{background:var(--surface);color:var(--ink);}
+
+/* CARDS */
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:6px 30px 6px 9px;cursor:pointer;transition:box-shadow .15s,transform .12s;box-shadow:var(--shadow);position:relative;}
+.card:hover{box-shadow:0 4px 14px rgba(0,0,0,.10);transform:translateY(-1px);}
+.card-name{font-size:9.5px;font-weight:500;color:var(--ink);line-height:1.3;}
+.card-sub{font-size:7.5px;color:var(--dim);margin-top:2px;line-height:1.35;}
+.card.hero{border-width:1.5px;border-color:var(--green);box-shadow:0 0 0 1px var(--green-mid),var(--shadow);}
+.badge{position:absolute;top:5px;right:5px;font-size:6.5px;font-weight:600;padding:1px 5px;border-radius:3px;letter-spacing:.5px;border:1px solid;}
+.b-sim{background:var(--blue-lt);color:var(--blue);border-color:var(--blue-mid);}
+.b-detect{background:var(--teal-lt);color:var(--teal);border-color:var(--teal-mid);}
+.b-repro{background:var(--purple-lt);color:var(--purple);border-color:var(--purple-mid);}
+
+.svc-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:8px;}
+.svc-2{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-top:8px;}
+.svc-full{grid-column:1/-1;}
+.ext-inner{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px;}
+.ext-inner .card{flex:1;min-width:120px;}
+
+/* connector (sensor) */
+.gw-connectors{display:flex;justify-content:center;gap:32px;padding:4px 0;}
+.gw-conn{display:flex;flex-direction:column;align-items:center;cursor:pointer;transition:opacity .15s;}
+.gw-conn:hover{opacity:.75;}
+.gw-conn-shaft{width:5px;height:12px;background:var(--teal);margin:0 7px;}
+.gw-conn-head{width:0;height:0;border-left:11px solid transparent;border-right:11px solid transparent;border-top:9px solid var(--teal);}
+.gw-conn-label{font-size:7.5px;letter-spacing:.4px;color:var(--teal);margin-top:4px;text-align:center;font-weight:500;background:var(--teal-lt);border:1px solid var(--teal-mid);border-radius:3px;padding:2px 9px;white-space:nowrap;}
+
+/* down arrows */
+.lv3-arrows{display:flex;justify-content:center;padding:2px 10%;color:var(--blue);margin-top:8px;margin-bottom:2px;}
+.lv3-arr{text-align:center;display:flex;flex-direction:column;align-items:center;gap:2px;}
+.lv3-arr-head{width:0;height:0;border-left:8px solid transparent;border-right:8px solid transparent;border-bottom:7px solid var(--blue);}
+.lv3-arr-shaft{width:4px;height:8px;background:var(--blue);}
+.lv3-arr-label{font-size:6.5px;color:var(--blue);letter-spacing:.3px;}
+
+/* infra column */
+.infra{flex-shrink:0;width:172px;}
+.infra .zone{margin-top:0;height:100%;}
+.infra-title{font-family:'Fraunces',serif;font-size:11px;font-weight:600;color:var(--purple);text-align:center;letter-spacing:.3px;margin:2px 0 8px;line-height:1.3;}
+.infra-cards{display:flex;flex-direction:column;gap:6px;}
+.infra-card{background:var(--surface);border:1px solid var(--purple-mid);border-radius:var(--r);padding:6px 9px;cursor:pointer;transition:box-shadow .15s,transform .12s;box-shadow:var(--shadow);position:relative;}
+.infra-card:hover{box-shadow:0 3px 12px rgba(91,74,138,.14);transform:translateY(-1px);}
+.infra-card-name{font-size:8.5px;font-weight:500;color:var(--purple);}
+.infra-card-sub{font-size:7px;color:var(--dim);margin-top:1px;line-height:1.3;}
+
+/* fade / collapse / hide */
+.card.faded,.infra-card.faded,.gw-conn.faded{opacity:.12!important;pointer-events:none;}
+.zone[data-collapsed] .card-sub,.zone[data-collapsed] .gw-conn-label,.z-infra[data-collapsed] .infra-card-sub{display:none;}
+body.hide-all-details .card-sub,body.hide-all-details .infra-card-sub,body.hide-all-details .gw-conn-label,body.hide-all-details .lv3-arr-label{display:none;}
+
+/* panel */
+.panel-bg{position:fixed;inset:0;background:rgba(26,22,18,.25);z-index:200;opacity:0;pointer-events:none;transition:opacity .2s;}
+.panel-bg.open{opacity:1;pointer-events:auto;}
+.panel{position:fixed;top:0;right:0;width:360px;height:100vh;background:var(--surface);border-left:1.5px solid var(--border);box-shadow:-6px 0 28px rgba(26,22,18,.14);z-index:201;overflow:hidden;display:flex;flex-direction:column;transform:translateX(100%);transition:transform .24s cubic-bezier(.4,0,.2,1);}
+.panel.open{transform:translateX(0);}
+.panel-hdr{background:var(--blue);color:#fff;padding:14px 16px 12px;display:flex;align-items:flex-start;gap:8px;}
+.panel-hdr-inner{flex:1;}
+.panel-title{font-family:'Fraunces',serif;font-size:13px;font-weight:600;line-height:1.25;}
+.panel-badge-row{margin-top:5px;display:flex;flex-wrap:wrap;gap:4px;}
+.panel-close{background:none;border:none;color:rgba(255,255,255,.6);font-size:17px;cursor:pointer;padding:0;line-height:1;flex-shrink:0;}
+.panel-close:hover{color:#fff;}
+.panel-body{flex:1;overflow-y:auto;padding:14px 16px;}
+.panel-desc{font-size:9.5px;line-height:1.75;color:var(--ink);margin-bottom:12px;white-space:pre-line;}
+.panel-tags{display:flex;flex-wrap:wrap;gap:4px;margin-bottom:12px;}
+.pt{font-size:7.5px;padding:2px 8px;border-radius:3px;}
+.pt-blue{background:var(--blue-lt);color:var(--blue);}
+.pt-teal{background:var(--teal-lt);color:var(--teal);}
+.pt-amber{background:var(--amber-lt);color:var(--amber);}
+.pt-purple{background:var(--purple-lt);color:var(--purple);}
+.pt-green{background:var(--green-lt);color:var(--green);}
+.section-hdr{font-size:7px;letter-spacing:1.5px;text-transform:uppercase;color:var(--dim);margin:10px 0 5px;}
+.flow-line{background:var(--blue-lt);border-left:2.5px solid var(--blue);padding:4px 8px;font-size:8.5px;color:var(--ink);border-radius:0 3px 3px 0;margin-bottom:3px;line-height:1.45;}
+
+/* legend */
+.legend{display:flex;gap:14px;flex-wrap:wrap;margin-top:14px;padding:8px 0 0;border-top:1px solid var(--border);font-size:7.5px;color:var(--dim);align-items:center;}
+.leg-item{display:flex;align-items:center;gap:5px;}
+.leg-swatch{width:11px;height:11px;border-radius:2px;border:1.5px solid;}
+#flow-legend{display:none;width:100%;margin-top:6px;padding-top:6px;border-top:1px solid var(--border);gap:14px;flex-wrap:wrap;align-items:center;}
+
+/* edit mode */
+body.edit-mode #edit-btn{background:var(--teal-lt);border-color:var(--teal);color:var(--teal);font-weight:600;}
+body.edit-mode [contenteditable]{outline:none;border-bottom:1.5px dashed var(--teal);cursor:text;}
+body.edit-mode [contenteditable]:focus{background:var(--teal-lt);border-bottom:1.5px solid var(--teal);padding:0 2px;border-radius:2px;}
+body.edit-mode .card,.edit-mode .infra-card{cursor:default;}
+body.edit-mode .card:hover,.edit-mode .infra-card:hover{transform:none;box-shadow:var(--shadow);}
+body.edit-mode .badge{cursor:pointer;user-select:none;}
+body.edit-mode .badge:hover{opacity:.75;outline:2px solid var(--ink);}
+body.edit-mode .edit-hint{display:flex;}
+.edit-hint{display:none;position:fixed;bottom:14px;right:14px;background:var(--teal-lt);border:1px solid var(--teal-mid);border-radius:6px;padding:7px 12px;font-size:8px;color:var(--teal);gap:14px;z-index:200;pointer-events:none;}
+
+/* flow svg */
+.diagram-wrap{position:relative;}
+#arrow-svg{position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;overflow:visible;z-index:10;}
+body.flows-on .card.flow-dim,body.flows-on .infra-card.flow-dim,body.flows-on .gw-conn.flow-dim{opacity:.15!important;}
+body.flows-on .card.flow-hl,body.flows-on .infra-card.flow-hl{box-shadow:0 0 0 2px var(--teal),0 0 10px rgba(26,127,117,.2)!important;transform:translateY(-1px);}
+body.flows-on .card.flow-src,body.flows-on .infra-card.flow-src{box-shadow:0 0 0 2.5px var(--blue),0 0 14px rgba(26,79,138,.25)!important;transform:translateY(-2px);}
+#flows-btn.active{background:var(--teal-lt);border-color:var(--teal);color:var(--teal);}
+#flow-tip{position:fixed;background:var(--surface);border:1px solid var(--border);border-radius:4px;padding:6px 10px;font-size:8px;color:var(--ink);pointer-events:none;z-index:600;opacity:0;transition:opacity .15s;max-width:260px;box-shadow:0 4px 16px rgba(0,0,0,.18);line-height:1.5;}
+#flow-tip.visible{opacity:1;}
+
+/* results overlay */
+#res-overlay{position:fixed;inset:0;z-index:400;background:var(--bg);overflow-y:auto;display:none;}
+#res-overlay.open{display:block;}
+.res-page{max-width:900px;margin:0 auto;padding:30px 20px 60px;}
+.res-hdr{font-family:'Fraunces',serif;font-size:18px;font-weight:800;color:var(--ink);margin-bottom:4px;}
+.res-hdr em{color:var(--blue);font-style:normal;}
+.res-sub{font-size:9px;color:var(--dim);letter-spacing:2px;margin-bottom:24px;text-transform:uppercase;}
+.res-close{position:fixed;top:14px;right:20px;z-index:401;}
+.res-group{margin-bottom:20px;}
+.res-group-title{font-size:10px;font-weight:500;letter-spacing:2px;text-transform:uppercase;color:var(--blue);margin-bottom:8px;padding-bottom:4px;border-bottom:1px solid var(--border);}
+.res-table{width:100%;border-collapse:collapse;}
+.res-table th{font-size:7.5px;letter-spacing:1px;text-transform:uppercase;color:var(--dim);text-align:left;padding:5px 8px;border-bottom:1px solid var(--border);}
+.res-table td{font-size:9px;padding:7px 8px;border-bottom:1px solid var(--border);color:var(--ink);vertical-align:top;line-height:1.5;}
+.res-table tr:hover td{background:var(--blue-lt);}
+.res-note{font-size:8.5px;color:var(--dim);font-style:italic;margin-top:16px;line-height:1.6;}
+</style>
+</head>
+<body>
+<div class="page">
+
+  <!-- SIDEBAR -->
+  <nav class="sidebar">
+    <div class="sb-title">CI Monitoring — <em>Architecture</em></div>
+    <div class="sb-div"></div>
+    <div class="sb-label">Layer</div>
+    <div class="filters">
+      <button class="fpill fp-all active" onclick="filterPhase('all')">All</button>
+      <button class="fpill fp-sim active" onclick="filterPhase('sim')">Sim</button>
+      <button class="fpill fp-detect active" onclick="filterPhase('detect')">Det</button>
+      <button class="fpill fp-repro active" onclick="filterPhase('repro')">Repro</button>
+    </div>
+    <div class="sb-div"></div>
+    <div class="sb-label">Theme</div>
+    <select class="btn" onchange="setTheme(this.value)" title="Theme">
+      <option value="paper" selected>📄 Paper</option>
+      <option value="word">🖨 Word</option>
+      <option value="slate">🪨 Slate</option>
+      <option value="forest">🌿 Forest</option>
+      <option value="maritime">🚢 Maritime</option>
+    </select>
+    <div class="sb-div"></div>
+    <div class="sb-label">View</div>
+    <button class="btn" id="details-btn" onclick="toggleAllDetails()" title="Toggle details">≡</button>
+    <button class="btn" id="flows-btn" onclick="toggleFlows()" title="Show flows">⇄</button>
+    <button class="btn" id="edit-btn" onclick="toggleEditMode()" style="border-color:var(--teal-mid);color:var(--teal);" title="Edit mode">✏</button>
+    <button class="btn" onclick="openResults()" style="border-color:var(--blue-mid);color:var(--blue);" title="Key Results">KR</button>
+    <div class="sb-div"></div>
+    <div class="sb-label">Tools</div>
+    <button class="btn" onclick="exportHTML()" title="Save as HTML">⬇</button>
+  </nav>
+
+  <!-- CONTENT -->
+  <div class="content">
+    <div class="edit-hint"><span>Click any name or subtitle to edit</span><span>Click badge to cycle layer</span></div>
+    <div class="diagram-wrap">
+    <div class="hdr"><h1>CI Monitoring — <em>Pipeline Architecture</em></h1></div>
+    <div class="hdr-sub">cimonitoring · simulation engine + detectors · click any component for details</div>
+
+    <div class="lv3-outer">
+      <div class="lv3-center">
+
+        <!-- INPUTS -->
+        <div class="zone z-pres">
+          <span class="zone-label">Inputs</span>
+          <span class="zone-toggle" onclick="toggleZone(this)" title="Toggle">−</span>
+          <div style="display:flex;gap:8px;margin-top:8px;">
+            <div class="card" data-status="sim" data-id="cfg" onclick="open_panel('cfg')" style="flex:1;"><span class="badge b-sim">SIM</span><div class="card-name">Config — Simulation Parameters</div><div class="card-sub">Shift hours · power levels · sampling · random seed (deterministic)</div></div>
+          </div>
+        </div>
+
+        <div class="lv3-arrows"><div class="lv3-arr"><div class="lv3-arr-head"></div><div class="lv3-arr-shaft"></div><div class="lv3-arr-label">parameters</div></div></div>
+
+        <!-- SIMULATION ENGINE -->
+        <div class="zone z-svc">
+          <span class="zone-label">Simulation Engine · Modules 1–3</span>
+          <span class="zone-toggle" onclick="toggleZone(this)" title="Toggle">−</span>
+          <div class="svc-grid">
+            <div class="card" data-status="sim" data-id="m1" onclick="open_panel('m1')"><span class="badge b-sim">SIM</span><div class="card-name">① Energy Substrate</div><div class="card-sub">Per-second kW = aux + spindle idle + cutting (Gutowski; anchored to Brillinger)</div></div>
+            <div class="card" data-status="sim" data-id="m2" onclick="open_panel('m2')"><span class="badge b-sim">SIM</span><div class="card-name">② Carbon Layer</div><div class="card-sub">Emissions + rolling CI per piece — the monitoring signal</div></div>
+            <div class="card" data-status="sim" data-id="m3" onclick="open_panel('m3')"><span class="badge b-sim">SIM</span><div class="card-name">③ Anomaly Model</div><div class="card-sub">4 fault archetypes · additive excess · ground truth</div></div>
+          </div>
+        </div>
+
+        <!-- SENSOR CONNECTOR -->
+        <div class="gw-connectors">
+          <div class="gw-conn" data-status="detect" data-id="sensor" onclick="open_panel('sensor')"><div class="gw-conn-shaft"></div><div class="gw-conn-head"></div><div class="gw-conn-label">Sensor &amp; Observation Model · downsample + meter noise → observed CI (shared)</div></div>
+        </div>
+
+        <!-- DETECTION -->
+        <div class="zone z-int">
+          <span class="zone-label">Detection &amp; Evaluation · Module 4 / 4b</span>
+          <span class="zone-toggle" onclick="toggleZone(this)" title="Toggle">−</span>
+          <div class="svc-grid">
+            <div class="card" data-status="detect" data-id="m4" onclick="open_panel('m4')"><span class="badge b-detect">DET</span><div class="card-name">④ Deployed Detector</div><div class="card-sub">Rolling baseline + threshold + persistence — has the inertia blind spot</div></div>
+            <div class="card hero" data-status="detect" data-id="m4b" onclick="open_panel('m4b')"><span class="badge b-detect">DET</span><div class="card-name">④ᵇ Proposed Detector ★</div><div class="card-sub">Event-anchored held baseline + residual CUSUM — closes the blind spot</div></div>
+            <div class="card" data-status="detect" data-id="eval" onclick="open_panel('eval')"><span class="badge b-detect">DET</span><div class="card-name">Evaluation</div><div class="card-sub">Scores alerts vs ground truth: latency · TP/FP · attribution</div></div>
+          </div>
+        </div>
+
+        <div class="lv3-arrows"><div class="lv3-arr"><div class="lv3-arr-head"></div><div class="lv3-arr-shaft"></div><div class="lv3-arr-label">per-fault metrics</div></div></div>
+
+        <!-- EXPERIMENT & REPRODUCIBILITY -->
+        <div class="zone z-ext">
+          <span class="zone-label">Experiment &amp; Reproducibility · Module 5</span>
+          <span class="zone-toggle" onclick="toggleZone(this)" title="Toggle">−</span>
+          <div class="ext-inner">
+            <div class="card" data-status="repro" data-id="m5" onclick="open_panel('m5')"><span class="badge b-repro">REPRO</span><div class="card-name">⑤ Sensitivity Harness</div><div class="card-sub"><span data-claim="n_sweeps">9</span> sweeps · <span data-claim="n_runs">4,356</span> runs · no tuning</div></div>
+            <div class="card" data-status="repro" data-id="data" onclick="open_panel('data')"><span class="badge b-repro">REPRO</span><div class="card-name">Raw Results</div><div class="card-sub">data/ · <span data-claim="n_runs">4,356</span> runs · authoritative</div></div>
+            <div class="card" data-status="repro" data-id="figs" onclick="open_panel('figs')"><span class="badge b-repro">REPRO</span><div class="card-name">Figure Reproduction</div><div class="card-sub">plot_paper_figs.py · from CSV only</div></div>
+            <div class="card" data-status="repro" data-id="nb" onclick="open_panel('nb')"><span class="badge b-repro">REPRO</span><div class="card-name">Colab Quickstart</div><div class="card-sub">Browser · zero setup</div></div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- QUALITY & DISTRIBUTION COLUMN -->
+      <div class="infra">
+        <div class="zone z-infra">
+          <span class="zone-label">Quality &amp; Distribution</span>
+          <div class="infra-title">Quality &amp;<br>Distribution</div>
+          <span class="zone-toggle" onclick="toggleZone(this)" title="Toggle">−</span>
+          <div class="infra-cards">
+            <div class="infra-card" data-status="repro" data-id="tests" onclick="open_panel('tests')"><div class="infra-card-name">Test Suite</div><div class="infra-card-sub">pytest · headline regression test</div></div>
+            <div class="infra-card" data-status="repro" data-id="ci" onclick="open_panel('ci')"><div class="infra-card-name">Continuous Integration</div><div class="infra-card-sub">GitHub Actions · Py 3.9/3.11/3.12</div></div>
+            <div class="infra-card" data-status="repro" data-id="pkg" onclick="open_panel('pkg')"><div class="infra-card-name">PyPI Package</div><div class="infra-card-sub">ci-monitoring-simulation · pip install</div></div>
+            <div class="infra-card" data-status="repro" data-id="zenodo" onclick="open_panel('zenodo')"><div class="infra-card-name">Zenodo Archive</div><div class="infra-card-sub">Concept DOI · versioned</div></div>
+            <div class="infra-card" data-status="repro" data-id="prov" onclick="open_panel('prov')"><div class="infra-card-name">Parameter Provenance</div><div class="infra-card-sub">ANCHORED · LITERATURE · ASSUMPTION</div></div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- LEGEND -->
+    <div class="legend">
+      <div class="leg-item"><div class="leg-swatch" style="background:var(--blue-lt);border-color:var(--blue);"></div>Simulation — substrate, carbon, anomaly (Modules 1–3)</div>
+      <div class="leg-item"><div class="leg-swatch" style="background:var(--teal-lt);border-color:var(--teal);"></div>Detection — deployed + proposed detectors, evaluation (Module 4 / 4b)</div>
+      <div class="leg-item"><div class="leg-swatch" style="background:var(--purple-lt);border-color:var(--purple);"></div>Reproducibility — harness, data, tests, packaging, archive</div>
+      <div style="margin-left:auto;font-size:7.5px;color:var(--dim);">Click any component for details · Esc to close</div>
+      <div id="flow-legend">
+        <span style="font-weight:500;color:var(--ink);">Flow types:</span>
+        <span style="display:flex;align-items:center;gap:4px;"><svg width="24" height="6"><line x1="0" y1="3" x2="20" y2="3" stroke="#1a4f8a" stroke-width="1.5"></line><polygon points="20,0 24,3 20,6" fill="#1a4f8a"></polygon></svg> Pipeline data</span>
+        <span style="display:flex;align-items:center;gap:4px;"><svg width="24" height="6"><line x1="0" y1="3" x2="20" y2="3" stroke="#5b4a8a" stroke-width="1.5" stroke-dasharray="5,3"></line><polygon points="20,0 24,3 20,6" fill="#5b4a8a"></polygon></svg> Reproducibility / packaging</span>
+        <span style="font-style:italic;">Hover a component to highlight its flows</span>
+      </div>
+    </div>
+    <svg id="arrow-svg" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <marker id="arr-data" markerWidth="4" markerHeight="3.5" refX="3.5" refY="1.75" orient="auto"><polygon points="0 0,4 1.75,0 3.5" fill="#1a4f8a"></polygon></marker>
+        <marker id="arr-data-hi" markerWidth="5" markerHeight="4" refX="4.5" refY="2" orient="auto"><polygon points="0 0,5 2,0 4" fill="#1a4f8a"></polygon></marker>
+        <marker id="arr-repro" markerWidth="4" markerHeight="3.5" refX="3.5" refY="1.75" orient="auto"><polygon points="0 0,4 1.75,0 3.5" fill="#5b4a8a"></polygon></marker>
+        <marker id="arr-repro-hi" markerWidth="5" markerHeight="4" refX="4.5" refY="2" orient="auto"><polygon points="0 0,5 2,0 4" fill="#5b4a8a"></polygon></marker>
+      </defs>
+    </svg>
+    </div><!-- /diagram-wrap -->
+  </div><!-- /content -->
+<div id="flow-tip"></div>
+</div><!-- /page -->
+
+<!-- KEY RESULTS OVERLAY -->
+<div id="res-overlay">
+  <button class="btn res-close" onclick="closeResults()">✕ Close</button>
+  <div class="res-page">
+    <div class="res-hdr">CI Monitoring — <em>Key Results</em></div>
+    <div class="res-sub">What the framework establishes · simulation study · click architecture to return</div>
+
+    <div class="res-group">
+      <div class="res-group-title">Characterisation (Paper 1)</div>
+      <table class="res-table">
+        <tr><th>Finding</th><th>Detail</th><th>Source</th></tr>
+        <tr><td>Inertia blind spot</td><td>The deployed adaptive-baseline detector misses faults whose onset timescale is comparable to its baseline window — the rolling reference tracks the fault and it never crosses threshold.</td><td>§4.7 sigmoid</td></tr>
+        <tr><td>Detection floor</td><td>80%-detection threshold ≈ 47% of baseline load (~1.6 kW); sudden faults are caught in minutes with correct attribution.</td><td>§4.1</td></tr>
+        <tr><td>Metering cadence</td><td>Coarse utility-grade metering (~15-min cadence) is too slow for this style of monitoring — a measurement-resolution limit, not a tuning one.</td><td>§4.2</td></tr>
+      </table>
+    </div>
+
+    <div class="res-group">
+      <div class="res-group-title">Proposed detector (Paper 2)</div>
+      <table class="res-table">
+        <tr><th>Finding</th><th>Detail</th><th>Source</th></tr>
+        <tr><td>Closes the blind spot</td><td>Event-anchored held baseline + residual CUSUM detects a slow ramp the deployed detector misses entirely (warning ≈ <span data-claim="demo_warning_latency_min">47</span> min after onset in the demo seed), with correct attribution and <span data-claim="demo_false_positives">0</span> false positives.</td><td>head-to-head</td></tr>
+        <tr><td>Robust across seeds</td><td>Effect established across 200-seed comparisons with confidence intervals, a detector ablation, and multiple severities — not a single lucky run.</td><td>§ evaluation</td></tr>
+        <tr><td>Controlled comparison</td><td>Both detectors consume the identical observed signal (shared sensor model), so the difference is attributable to detection logic alone.</td><td>by design</td></tr>
+        <tr><td>Real-data grounding</td><td>Parameters anchored to the open Brillinger et al. (2025) CNC dataset; the detector is exercised on real spindle-power traces with controlled fault injection.</td><td>validation</td></tr>
+      </table>
+    </div>
+
+    <div class="res-note">Scope: this is a calibrated simulation study. It characterises how the monitoring mechanism behaves and validates the proposed detector on real spindle-power traces with controlled (injected) faults — not a real-world industrial deployment.</div>
+  </div>
+</div>
+
+<!-- DETAIL PANEL -->
+<div class="panel-bg" id="poverlay" onclick="close_panel()"></div>
+<div class="panel" id="panel">
+  <div class="panel-hdr">
+    <div class="panel-hdr-inner">
+      <div class="panel-title" id="p-title"></div>
+      <div class="panel-badge-row" id="p-badge"></div>
+    </div>
+    <button class="panel-close" onclick="close_panel()">✕</button>
+  </div>
+  <div class="panel-body">
+    <div class="panel-tags" id="p-tags"></div>
+    <div class="panel-desc" id="p-desc"></div>
+    <div id="p-flows"></div>
+  </div>
+</div>
+
+<script>
+const D = {
+  'cfg': { name:'Config — Simulation Parameters', status:'sim', tags:[['dataclass','blue'],['random seed','teal'],['reproducible','green']], desc:"Typed configuration for one simulation run: shift hours, auxiliary base load, spindle idle and cutting-increment power, cutting duty cycle, measurement noise, sampling cadence, and a random seed. A fixed seed makes every run deterministic, so results reproduce exactly.", flows:['→ Drives Module 1 (simulate_work_center)','→ Same seed reproduces the identical substrate'] },
+
+  'm1': { name:'Module 1 — Energy Substrate', status:'sim', tags:[['Gutowski model','blue'],['per-second kW','teal'],['anchored','green']], desc:"Generates a per-second power time series for one work centre: total power = auxiliary base load + spindle no-load (idle) + spindle cutting increment (only while the tool is engaged). This base-plus-production decomposition follows Gutowski et al. (2006); the no-load spindle range (~0.8–1.0 kW) is anchored to the open Brillinger et al. (2025) CNC dataset. Every parameter carries a provenance tag.", flows:['← Config parameters','→ Energy substrate → Carbon Layer','→ Energy substrate → Anomaly Model'] },
+  'm2': { name:'Module 2 — Carbon Layer', status:'sim', tags:[['emission factor','blue'],['CI per piece','teal']], desc:"Layers emissions and carbon intensity onto the energy substrate: instantaneous and cumulative kg CO2e, and the central monitoring signal — rolling CI per piece (kg CO2e per piece over the last N minutes). When energy rises but output does not (the anomaly case), CI per piece rises — exactly what an alert engine should fire on. Supports a static or time-varying grid emission factor.", flows:['← Energy substrate from Module 1','→ Defines the CI-per-piece metric the detectors consume'] },
+  'm3': { name:'Module 3 — Anomaly Model', status:'sim', tags:[['4 archetypes','blue'],['ground truth','teal'],['additive excess','green']], desc:"Injects parametrised faults as additive excess power that produces no extra output, so CI per piece rises. Because the fault is constructed, its exact onset, magnitude, and duration are known — the ground truth every alert is scored against. Four literature/data-grounded archetypes: compressed-air leak, machine-left-on, tool-wear, coolant-pump fault. Magnitude, duration, and onset profile (step or ramp) are all swept.", flows:['← Energy substrate from Module 1','→ Faulted substrate + ground-truth labels → sensor model'] },
+
+  'sensor': { name:'Sensor & Observation Model', status:'detect', tags:[['downsample','blue'],['meter noise','teal'],['shared','green']], desc:"Models what an MES/SCADA system actually sees: the per-second ground truth is downsampled to the meter cadence and given measurement noise, then converted to observed CI per piece. This stage (sample_and_noise) is defined once in Module 4 and reused unchanged by Module 4b, so both detectors see the identical observed signal — which makes the comparison a controlled experiment.", flows:['← Faulted substrate from Module 3','→ Observed CI per piece → Deployed detector','→ Observed CI per piece → Proposed detector'] },
+
+  'm4': { name:'Module 4 — Deployed Detector', status:'detect', tags:[['rolling baseline','blue'],['threshold','teal'],['persistence','purple']], desc:"The conventional MES detector. Compares observed CI per piece to a rolling baseline with a threshold (absolute, relative [default], or statistical) and a tiered persistence requirement (warning after W consecutive samples, critical after C), plus component attribution (machine vs spindle). Its structural limitation — the inertia blind spot — is that a fault developing on a timescale comparable to the baseline window is tracked by the baseline and never crosses threshold.", flows:['← Observed CI from sensor model','→ Tiered alerts + attribution → Evaluation'] },
+  'm4b': { name:'Module 4b — Proposed Detector', status:'detect', tags:[['event-anchored','blue'],['residual CUSUM','teal'],['closes blind spot','green']], desc:"The proposed detector that closes the inertia blind spot, via two literature-grounded mechanisms:\n\n(1) Event-anchored held baseline — the reference is estimated over a short window just after a known-healthy MES event (shift start after maintenance, operator-confirmed state, tool change from the NC program) and HELD CONSTANT until the next anchor, so slow drift accumulates against a stationary reference instead of disappearing into a moving one.\n\n(2) Residual CUSUM — a one-sided cumulative-sum test on the dimensionless fractional residual (CI − B_anchor)/B_anchor, near-optimal for small persistent shifts (Page 1954; Lorden 1971).\n\nReuses Module 4's sensor model for a controlled comparison. Selectable: anchored_threshold (D1) or anchored_cusum (D2).", flows:['← Observed CI from sensor model (identical signal)','→ Tiered alerts + attribution → Evaluation'] },
+  'eval': { name:'Evaluation', status:'detect', tags:[['vs ground truth','blue'],['latency','teal'],['TP / FP','purple']], desc:"Scores each detector's alerts against the Module 3 ground truth: whether the fault was detected (warning / critical), detection latency in minutes, false-positive count, and attribution correctness. Returns a per-fault metrics dictionary — the basis for every reported number.", flows:['← Alerts from Deployed and Proposed detectors','← Ground truth from Module 3','→ Per-fault metrics → Sensitivity harness'] },
+
+  'm5': { name:'Module 5 — Sensitivity Harness', status:'repro', tags:[['9 sweeps','blue'],['4,356 runs','teal'],['no tuning','green']], desc:"Orchestrates the substrate → anomaly → monitor → evaluate pipeline across parameter sweeps (severity, duration, sampling cadence, threshold tightness and family, archetype, attribution, ramp time, ramp transition) and aggregates outcome metrics. No tuning to targets — the contribution is the characterisation, including where the architecture struggles. Writes raw per-run results to CSV.", flows:['← Runs the full pipeline many times over swept configs','→ Raw per-run results → data/*.csv'] },
+  'data': { name:'Raw Results', status:'repro', tags:[['4,356 runs','blue'],['9 CSVs','teal'],['authoritative','green']], desc:"The authoritative artifact: 4,356 individual simulation runs across nine parameter sweeps, released as CSVs in data/. Every figure and headline number is reproducible from these files.", flows:['← Sensitivity harness','→ Read by figure reproduction and the Colab demo','→ Archived with the release on Zenodo'] },
+  'figs': { name:'Figure Reproduction', status:'repro', tags:[['plot_paper_figs.py','blue'],['from CSV only','teal']], desc:"Regenerates every reported figure purely from the released CSVs in data/ — no simulation modules required. One command, under a minute.", flows:['← Raw results CSVs','→ figures/*.png'] },
+  'nb': { name:'Colab Quickstart', status:'repro', tags:[['browser','blue'],['zero setup','teal']], desc:"A browser-executable notebook that installs the package from PyPI and reproduces the headline result (the deployed detector misses a slow ramp; the anchored detector catches it) with no local installation.", flows:['← Installs the package from PyPI','← Runs the engine in the browser','→ Headline result + figure with no setup'] },
+
+  'tests': { name:'Test Suite', status:'repro', tags:[['pytest','blue'],['regression test','teal']], desc:"End-to-end pytest suite exercising the full pipeline — substrate, carbon layer, anomaly model, deployed detector, proposed detector — including a regression test that locks the headline result (the fixed-reference detector fires on a slow ramp the deployed detector misses) and an integrity check that the released CSVs load and the shared modules do not drift.", flows:['← Imports the package modules','→ Pass/fail under Continuous Integration'] },
+  'ci': { name:'Continuous Integration', status:'repro', tags:[['GitHub Actions','blue'],['Py 3.9 / 3.11 / 3.12','teal']], desc:"GitHub Actions runs the test suite on every push across Python 3.9, 3.11, and 3.12, after building and installing the package — documented, repeatable confirmation that the system works as described.", flows:['← Runs the test suite','→ Passing status badge on the repository'] },
+  'pkg': { name:'PyPI Package', status:'repro', tags:[['ci-monitoring-simulation','blue'],['pip install','teal']], desc:"The engine published as the installable package cimonitoring on the Python Package Index — any third party can install and run it with a single command (pip install ci-monitoring-simulation). Version aligned across PyPI, GitHub, and Zenodo.", flows:['→ Exposes Modules 1–5 + detectors as a public API','→ Consumed by the Colab quickstart and any user'] },
+  'zenodo': { name:'Zenodo Archive', status:'repro', tags:[['concept DOI','blue'],['versioned','teal']], desc:"Permanently archived, citable deposit with a concept DOI (10.5281/zenodo.20634187) that resolves to the latest version — a fixed, version-identified artifact in the public scientific record.", flows:['← Each GitHub release','→ Citable DOI for the software'] },
+  'prov': { name:'Parameter Provenance', status:'repro', tags:[['ANCHORED','blue'],['LITERATURE','teal'],['ASSUMPTION','purple']], desc:"Every numeric parameter carries a provenance tag — [ANCHORED] (fit to real Brillinger data), [LITERATURE] (cited), or [ASSUMPTION] (engineering estimate, exercised in the sweeps) — documented in docs/parameter_provenance.md.", flows:['→ Tags parameters across Modules 1–4','→ The assumptions are exactly what Module 5 sweeps'] },
+};
+
+const BADGE = {sim:'SIM',detect:'DET',repro:'REPRO'};
+const BADGE_CLS = {sim:'b-sim',detect:'b-detect',repro:'b-repro'};
+
+function open_panel(id) {
+  const d = D[id]; if (!d) return;
+  document.getElementById('p-title').textContent = d.name;
+  document.getElementById('p-badge').innerHTML = d.status
+    ? '<span class="badge '+BADGE_CLS[d.status]+'" style="position:static;font-size:8px;padding:2px 8px;">'+BADGE[d.status]+'</span>' : '';
+  document.getElementById('p-tags').innerHTML = (d.tags||[])
+    .map(function(t){return '<span class="pt pt-'+t[1]+'">'+t[0]+'</span>';}).join('');
+  document.getElementById('p-desc').textContent = d.desc;
+  var fe = document.getElementById('p-flows');
+  fe.innerHTML = d.flows && d.flows.length
+    ? '<div class="section-hdr">Data &amp; Pipeline Flows</div>' + d.flows.map(function(f){return '<div class="flow-line">'+f+'</div>';}).join('') : '';
+  document.getElementById('poverlay').classList.add('open');
+  document.getElementById('panel').classList.add('open');
+}
+function close_panel() {
+  document.getElementById('poverlay').classList.remove('open');
+  document.getElementById('panel').classList.remove('open');
+}
+document.addEventListener('keydown', function(e) { if (e.key === 'Escape') { close_panel(); closeResults(); } });
+
+function setTheme(t) { document.documentElement.setAttribute('data-theme', t || 'paper'); }
+
+var ALL_PHASES = ['sim','detect','repro'];
+var activePhases = new Set(ALL_PHASES);
+
+function filterPhase(phase) {
+  if (phase === '__reapply__') {
+    document.querySelectorAll('.card,.infra-card,.gw-conn').forEach(function(el) {
+      var s = el.dataset.status;
+      el.classList.toggle('faded', !!s && !activePhases.has(s));
+    });
+    return;
+  }
+  if (phase === 'all') {
+    activePhases = activePhases.size === ALL_PHASES.length ? new Set() : new Set(ALL_PHASES);
+  } else {
+    activePhases.has(phase) ? activePhases.delete(phase) : activePhases.add(phase);
+  }
+  document.querySelectorAll('.fpill').forEach(function(b) {
+    var p = Array.from(b.classList).find(function(c){return c.startsWith('fp-');});
+    if (p) p = p.replace('fp-','');
+    if (p === 'all') {
+      b.classList.toggle('active', activePhases.size === ALL_PHASES.length);
+      b.classList.toggle('inactive', activePhases.size === 0);
+    } else {
+      b.classList.toggle('active', activePhases.has(p));
+      b.classList.toggle('inactive', !activePhases.has(p));
+    }
+  });
+  document.querySelectorAll('.card,.infra-card,.gw-conn').forEach(function(el) {
+    var s = el.dataset.status;
+    el.classList.toggle('faded', !!s && !activePhases.has(s));
+  });
+}
+
+function toggleZone(btn) {
+  var zone = btn.closest('.zone');
+  if (!zone) return;
+  if (zone.hasAttribute('data-collapsed')) { zone.removeAttribute('data-collapsed'); btn.textContent = '−'; }
+  else { zone.setAttribute('data-collapsed', ''); btn.textContent = '+'; }
+}
+function toggleAllDetails() { document.body.classList.toggle('hide-all-details'); }
+
+// EDIT MODE
+var EDIT_SEL = '.card-name,.card-sub,.infra-card-name,.infra-card-sub,.zone-label';
+var PHASES_CYCLE = ['sim','detect','repro'];
+var PHASE_LABELS = {sim:'SIM',detect:'DET',repro:'REPRO'};
+var editMode = false;
+function toggleEditMode() {
+  editMode = !editMode;
+  document.body.classList.toggle('edit-mode', editMode);
+  document.querySelectorAll(EDIT_SEL).forEach(function(el) { el.contentEditable = editMode ? 'true' : 'false'; });
+  if (editMode) {
+    document.querySelectorAll('.card,.infra-card').forEach(function(el) { el.removeAttribute('onclick'); });
+    document.querySelectorAll('.badge').forEach(function(b) {
+      b.onclick = function(e) {
+        e.stopPropagation();
+        var card = b.closest('[data-status]');
+        if (!card) return;
+        var cur = card.dataset.status;
+        var idx = PHASES_CYCLE.indexOf(cur);
+        var next = PHASES_CYCLE[(idx + 1) % PHASES_CYCLE.length];
+        card.dataset.status = next;
+        b.className = 'badge b-' + next;
+        b.textContent = PHASE_LABELS[next];
+      };
+    });
+  } else { location.reload(); }
+}
+
+// FLOW VISUALIZATION
+var FLOW_TYPES = {
+  data:  {stroke:'#1a4f8a',dash:'none', label:'Pipeline data'},
+  repro: {stroke:'#5b4a8a',dash:'5,3', label:'Reproducibility / packaging'},
+};
+var FLOW_DEFS = [
+  {from:'cfg', to:'m1',  type:'data', label:'simulation parameters'},
+  {from:'m1',  to:'m2',  type:'data', label:'energy substrate'},
+  {from:'m1',  to:'m3',  type:'data', label:'energy substrate'},
+  {from:'m3',  to:'sensor', type:'data', label:'faulted signal + ground truth'},
+  {from:'m2',  to:'sensor', type:'data', label:'CI-per-piece metric'},
+  {from:'sensor', to:'m4',  type:'data', label:'observed CI'},
+  {from:'sensor', to:'m4b', type:'data', label:'observed CI (identical signal)'},
+  {from:'m4',  to:'eval', type:'data', label:'alerts + attribution'},
+  {from:'m4b', to:'eval', type:'data', label:'alerts + attribution'},
+  {from:'eval',to:'m5',   type:'data', label:'per-fault metrics'},
+  {from:'m5',  to:'data', type:'data', label:'raw per-run CSV'},
+  {from:'data',to:'figs', type:'repro',label:'regenerate figures'},
+  {from:'data',to:'nb',   type:'repro',label:'verify / demo'},
+  {from:'data',to:'zenodo',type:'repro',label:'archived with release'},
+  {from:'tests',to:'ci',  type:'repro',label:'run on every push'},
+  {from:'pkg', to:'m1',   type:'repro',label:'installable API (wraps engine)'},
+  {from:'pkg', to:'nb',   type:'repro',label:'pip install'},
+  {from:'prov',to:'m1',   type:'repro',label:'parameter tags'},
+];
+
+var flowsOn = false, drawnArrows = [], hoverNode = null, flowTip = null;
+
+function getRect(id) {
+  var el = document.querySelector('[data-id="'+id+'"]');
+  if (!el) return null;
+  var wrap = document.querySelector('.diagram-wrap');
+  var wr = wrap.getBoundingClientRect();
+  var r = el.getBoundingClientRect();
+  return {left:r.left-wr.left,top:r.top-wr.top,right:r.right-wr.left,bottom:r.bottom-wr.top,cx:r.left+r.width/2-wr.left,cy:r.top+r.height/2-wr.top,w:r.width,h:r.height};
+}
+function bestSides(a,b){var dx=b.cx-a.cx,dy=b.cy-a.cy;return Math.abs(dy)>Math.abs(dx)*0.8?(dy>0?['bottom','top']:['top','bottom']):(dx>0?['right','left']:['left','right']);}
+function edgePt(r,side){switch(side){case'top':return{x:r.cx,y:r.top};case'bottom':return{x:r.cx,y:r.bottom};case'left':return{x:r.left,y:r.cy};case'right':return{x:r.right,y:r.cy};}}
+function buildPath(fr,to,off){
+  var sides=bestSides(fr,to),fs=sides[0],ts=sides[1],fp=edgePt(fr,fs),tp=edgePt(to,ts);
+  if(fs==='bottom'||fs==='top'){fp.x+=off;tp.x+=off;}else{fp.y+=off;tp.y+=off;}
+  var mx=(fp.x+tp.x)/2,my=(fp.y+tp.y)/2;
+  return (fs==='bottom'||fs==='top')
+    ?'M'+fp.x+','+fp.y+' C'+fp.x+','+my+' '+tp.x+','+my+' '+tp.x+','+tp.y
+    :'M'+fp.x+','+fp.y+' C'+mx+','+fp.y+' '+mx+','+tp.y+' '+tp.x+','+tp.y;
+}
+function drawAllArrows() {
+  var svg = document.getElementById('arrow-svg'), defs = svg.querySelector('defs');
+  svg.innerHTML = ''; svg.appendChild(defs);
+  var wrap = document.querySelector('.diagram-wrap');
+  svg.setAttribute('height', wrap.scrollHeight);
+  drawnArrows = [];
+  var pairCnt={}, pairIdx={};
+  FLOW_DEFS.forEach(function(f){var k=[f.from,f.to].sort().join('|');pairCnt[k]=(pairCnt[k]||0)+1;});
+  FLOW_DEFS.forEach(function(flow){
+    var fr=getRect(flow.from), to=getRect(flow.to);
+    if(!fr||!to) return;
+    var fc=FLOW_TYPES[flow.type];
+    var k=[flow.from,flow.to].sort().join('|');
+    pairIdx[k]=(pairIdx[k]||0)+1;
+    var off=(pairIdx[k]-(pairCnt[k]+1)/2)*6;
+    var path=buildPath(fr,to,off);
+    var g=document.createElementNS('http://www.w3.org/2000/svg','g');
+    g.dataset.from=flow.from; g.dataset.to=flow.to; g.dataset.type=flow.type;
+    var hit=document.createElementNS('http://www.w3.org/2000/svg','path');
+    hit.setAttribute('d',path);hit.setAttribute('stroke','transparent');hit.setAttribute('stroke-width','10');hit.setAttribute('fill','none');hit.style.cursor='pointer';
+    hit.addEventListener('mouseenter',function(e){showFlowTip(e,flow);});
+    hit.addEventListener('mouseleave',hideFlowTip);
+    var vis=document.createElementNS('http://www.w3.org/2000/svg','path');
+    vis.setAttribute('d',path);vis.setAttribute('stroke',fc.stroke);vis.setAttribute('stroke-width','1.2');vis.setAttribute('fill','none');vis.setAttribute('opacity','0.5');vis.setAttribute('marker-end','url(#arr-'+flow.type+')');
+    if(fc.dash!=='none') vis.setAttribute('stroke-dasharray',fc.dash);
+    g.appendChild(hit);g.appendChild(vis);svg.appendChild(g);
+    drawnArrows.push({flow:flow,g:g,vis:vis});
+  });
+  applyFlowState();
+}
+function applyFlowState() {
+  var conn = {};
+  if(hoverNode) FLOW_DEFS.forEach(function(f){if(f.from===hoverNode||f.to===hoverNode){conn[f.from]=1;conn[f.to]=1;}});
+  drawnArrows.forEach(function(a){
+    var show = !hoverNode || a.flow.from===hoverNode || a.flow.to===hoverNode;
+    a.g.style.opacity = show ? '1' : '0.06';
+    a.g.style.pointerEvents = show ? 'auto' : 'none';
+    if(show && hoverNode){a.vis.setAttribute('stroke-width','2.2');a.vis.setAttribute('opacity','0.85');a.vis.setAttribute('marker-end','url(#arr-'+a.flow.type+'-hi)');}
+    else {a.vis.setAttribute('stroke-width','1.2');a.vis.setAttribute('opacity','0.5');a.vis.setAttribute('marker-end','url(#arr-'+a.flow.type+')');}
+  });
+  document.querySelectorAll('[data-id]').forEach(function(el){
+    var id=el.dataset.id; el.classList.remove('flow-src','flow-hl','flow-dim');
+    if(!hoverNode) return;
+    if(id===hoverNode) el.classList.add('flow-src'); else if(conn[id]) el.classList.add('flow-hl'); else el.classList.add('flow-dim');
+  });
+}
+function toggleFlows() {
+  flowsOn = !flowsOn;
+  document.body.classList.toggle('flows-on', flowsOn);
+  document.getElementById('flows-btn').classList.toggle('active', flowsOn);
+  document.getElementById('flow-legend').style.display = flowsOn ? 'flex' : 'none';
+  if(flowsOn){
+    drawAllArrows();
+    document.querySelectorAll('[data-id]').forEach(function(el){el.addEventListener('mouseenter',onFlowHover);el.addEventListener('mouseleave',onFlowLeave);});
+  } else {
+    hoverNode=null;
+    var svg=document.getElementById('arrow-svg'),defs=svg.querySelector('defs');
+    svg.innerHTML='';svg.appendChild(defs);drawnArrows=[];
+    document.querySelectorAll('[data-id]').forEach(function(el){el.removeEventListener('mouseenter',onFlowHover);el.removeEventListener('mouseleave',onFlowLeave);el.classList.remove('flow-src','flow-hl','flow-dim');});
+  }
+}
+function onFlowHover(e){hoverNode=e.currentTarget.dataset.id;applyFlowState();}
+function onFlowLeave(){hoverNode=null;applyFlowState();}
+function showFlowTip(e,flow){
+  flowTip=flowTip||document.getElementById('flow-tip');
+  var fc=FLOW_TYPES[flow.type], fn=(D[flow.from]||{}).name||flow.from, tn=(D[flow.to]||{}).name||flow.to;
+  flowTip.innerHTML='<strong style="color:'+fc.stroke+'">'+fn+' → '+tn+'</strong><div style="margin-top:3px;font-size:7px;color:var(--dim)">'+fc.label+'</div><div style="margin-top:2px;">'+flow.label+'</div>';
+  flowTip.classList.add('visible');moveFlowTip(e);
+}
+function hideFlowTip(){if(flowTip)flowTip.classList.remove('visible');}
+function moveFlowTip(e){var x=e.clientX+12,y=e.clientY+12;if(x+260>innerWidth)x=e.clientX-270;if(y+60>innerHeight)y=e.clientY-70;flowTip.style.left=x+'px';flowTip.style.top=y+'px';}
+document.addEventListener('mousemove',function(e){if(flowTip&&flowTip.classList.contains('visible'))moveFlowTip(e);});
+window.addEventListener('resize',function(){if(flowsOn)drawAllArrows();});
+
+function openResults(){document.getElementById('res-overlay').classList.add('open');}
+function closeResults(){document.getElementById('res-overlay').classList.remove('open');}
+
+function exportHTML() {
+  var blob = new Blob(['<!DOCTYPE html>'+document.documentElement.outerHTML], {type:'text/html'});
+  var a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'ci-monitoring-architecture.html';
+  a.click();
+}
+</script>
+</body></html>
