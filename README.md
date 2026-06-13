@@ -181,7 +181,7 @@ The key design property is the **shared sensor stage**: `sample_and_noise()` liv
 | Module 5 — Sensitivity harness | `sensitivity.py` | Run the substrate → anomaly → monitor → evaluate pipeline across parameter sweeps; write raw per-run results to CSV. No tuning to targets. | sweep functions |
 | Reproduction | `plot_paper_figs.py` | Regenerate every figure purely from the released CSVs (no simulation modules required). | — |
 
-An interactive version of this diagram (clickable components, flow overlay, themes) is in `architecture.html`, and a fuller write-up with design rationale and extension points is in `ARCHITECTURE.md`.
+▶ **[Open the interactive diagram](https://lesiayanytska78.github.io/ci-monitoring-simulation/architecture.html)** — clickable components, flow overlay, and themes (source: `architecture.html`). A fuller write-up with design rationale and extension points is in `ARCHITECTURE.md`.
 
 ---
 
