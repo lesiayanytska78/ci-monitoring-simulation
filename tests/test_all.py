@@ -127,3 +127,18 @@ def test_package_imports_and_matches_flat_engine():
     a = ci.simulate_work_center(ci.Config(seed=7))
     b = simulate_work_center(Config(seed=7))      # flat engine, imported at top
     assert np.allclose(a.total_kw.values, b.total_kw.values)
+
+
+def test_architecture_html_claims_match_code():
+    """Every number rendered in architecture.html via a data-claim span must
+    equal the value recomputed from the engine + released CSVs. Guards the
+    interactive diagram against drifting away from the actual results."""
+    sys.path.insert(0, str(ROOT))
+    import make_claims_manifest as mcm
+    claims = mcm.compute_claims(str(ROOT))
+    html_claims = mcm.parse_html_claims(str(ROOT / "architecture.html"))
+    for key in ("demo_warning_latency_min", "demo_false_positives", "n_runs", "n_sweeps"):
+        assert key in html_claims, f"architecture.html missing data-claim span for {key}"
+        assert str(claims[key]) == html_claims[key], (
+            f"{key}: diagram says {html_claims[key]!r} but code computes {claims[key]!r} "
+            "— regenerate with `python make_claims_manifest.py`")
