@@ -8,7 +8,7 @@
 
 Simulation code, raw sweep data, and figure-generation scripts for the paper:
 
-> **Yanytska, L. (2026).** *Detection limits of MES-embedded carbon-intensity monitoring for energy anomalies: a calibrated simulation study in machining-style processes.* Manuscript in preparation.
+> **Yanytska, L. (2026).** *Detection limits of MES-embedded carbon-intensity monitoring for energy anomalies: a calibrated simulation study in machining-style processes.* Manuscript in review.
 
 This repository reproduces every figure in the paper from the 4,056 raw simulation runs released in `data/`.
 
