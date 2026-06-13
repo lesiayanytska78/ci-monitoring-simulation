@@ -70,4 +70,4 @@ All archetype parameters are illustrative starting points; magnitude, duration, 
 
 ## Module 5 — Sensitivity harness (`simulation/sensitivity.py`)
 
-Nine sweeps, 4,056 total runs. See the paper's §3.6 table and the `data/` CSVs for the exact ranges, seed counts, and per-run results.
+Nine sweeps, 4,356 total runs. See the paper's §3.6 table and the `data/` CSVs for the exact ranges, seed counts, and per-run results.
