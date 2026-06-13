@@ -5,6 +5,7 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.20634187.svg)](https://doi.org/10.5281/zenodo.20634187)
 [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/lesiayanytska78/ci-monitoring-simulation/blob/main/notebooks/quickstart.ipynb)
+[![Architecture](https://img.shields.io/badge/architecture-interactive_diagram-1f6feb)](https://lesiayanytska78.github.io/ci-monitoring-simulation/architecture.html)
 
 Simulation code, raw sweep data, and figure-generation scripts for the paper:
 
