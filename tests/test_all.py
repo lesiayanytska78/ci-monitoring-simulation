@@ -118,15 +118,57 @@ def test_shared_modules_do_not_drift():
         assert a.read_text() == b.read_text(), f"{m} differs between the two folders"
 
 
-def test_package_imports_and_matches_flat_engine():
-    """The installable cimonitoring package imports and reproduces the flat
-    engine's output bit-for-bit (guards the package against silent drift)."""
+def test_package_matches_flat_engine_full_pipeline():
+    """The installable `cimonitoring` package must reproduce the flat engine's
+    output across the WHOLE pipeline — substrate, carbon layer, anomaly model,
+    deployed detector, and the proposed event-anchored + CUSUM detector — over
+    several seeds. This is a behavioural parity check (not a text diff), because
+    the package uses relative imports and so cannot be byte-compared to the flat
+    copies; it is the guard that catches the package silently drifting from the
+    released results. (Closes the gap reported in issue #2: the old check only
+    compared `total_kw` and never exercised the carbon/anomaly/detector logic or
+    `monitoring_anchored.py`.)"""
     sys.path.insert(0, str(ROOT))
     import cimonitoring as ci
     assert hasattr(ci, "run_monitoring_anchored") and hasattr(ci, "AnchoredMonitorConfig")
-    a = ci.simulate_work_center(ci.Config(seed=7))
-    b = simulate_work_center(Config(seed=7))      # flat engine, imported at top
-    assert np.allclose(a.total_kw.values, b.total_kw.values)
+
+    def _spec(mk):  # build the same AnomalySpec from each engine's class
+        return dict(onset_hour=10, duration_minutes=240, magnitude_kw=2.0,
+                    onset_profile="ramp", onset_ramp_seconds=3600,
+                    affects="spindle", label="t")
+
+    def _nan_eq(x, y):
+        return np.allclose(np.nan_to_num(x, nan=-1.0), np.nan_to_num(y, nan=-1.0))
+
+    for seed in (1, 7, 13):
+        # 1) energy substrate (Module 1)
+        sp = ci.simulate_work_center(ci.Config(seed=seed))
+        sf = simulate_work_center(Config(seed=seed))
+        for col in ("machine_kw", "spindle_kw", "total_kw", "pieces_cum"):
+            assert np.allclose(sp[col].values, sf[col].values), (seed, "substrate", col)
+
+        # 2) carbon layer (Module 2)
+        cp = ci.compute_carbon_layer(sp, ci.CarbonConfig())
+        cf = compute_carbon_layer(sf, CarbonConfig())
+        assert _nan_eq(cp["ci_per_piece_rolling_kg"].values,
+                       cf["ci_per_piece_rolling_kg"].values), (seed, "carbon")
+
+        # 3) anomaly model (Module 3)
+        ap = ci.inject_anomalies(sp, ci.AnomalyConfig([ci.AnomalySpec(**_spec(ci))]))
+        af = inject_anomalies(sf, AnomalyConfig([AnomalySpec(**_spec(None))]))
+        assert np.allclose(ap["total_kw"].values, af["total_kw"].values), (seed, "anomaly")
+
+        # 4) deployed detector (Module 4)
+        dp = ci.run_monitoring(ap, ci.MonitorConfig(), EF, seed=1)
+        de = run_monitoring(af, MonitorConfig(), EF, seed=1)
+        assert np.array_equal(dp["alert_level"].values, de["alert_level"].values), (seed, "deployed")
+
+        # 5) proposed event-anchored + CUSUM detector (Module 4b — the core)
+        cfg = ci.AnchoredMonitorConfig(detector="anchored_cusum")
+        anp = ci.run_monitoring_anchored(ap, cfg, EF, seed=1)
+        ane = run_monitoring_anchored(af, AnchoredMonitorConfig(detector="anchored_cusum"), EF, seed=1)
+        assert np.array_equal(anp["alert_level"].values, ane["alert_level"].values), (seed, "anchored alerts")
+        assert _nan_eq(anp["cusum"].values, ane["cusum"].values), (seed, "anchored cusum")
 
 
 def test_architecture_html_claims_match_code():
