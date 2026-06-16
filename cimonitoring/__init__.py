@@ -28,7 +28,7 @@ from .monitoring_anchored import (
     AnchoredMonitorConfig, run_monitoring_anchored, detect_anchored, held_baseline,
 )
 
-__version__ = "2.2.3"
+__version__ = "2.2.4"
 
 __all__ = [
     "Config", "simulate_work_center",
