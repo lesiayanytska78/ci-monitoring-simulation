@@ -234,7 +234,7 @@ If you use this code or data, please cite the paper and the archived repository:
   title     = {Detection limits of MES-embedded carbon-intensity monitoring: simulation code and data},
   year      = {2026},
   publisher = {Zenodo},
-  version   = {v2.2.3},
+  version   = {v2.2.4},
   doi       = {10.5281/zenodo.20634187},
   url       = {https://doi.org/10.5281/zenodo.20634187}
 }
