@@ -1,0 +1,3 @@
+scenario,delta_CI_pct,delta_power_pct,CI_detector_fires,power_detector_fires
+throughput_loss_45pct,68.2,-4.1,True,False
+additive_power_2kW,30.9,38.1,True,True
