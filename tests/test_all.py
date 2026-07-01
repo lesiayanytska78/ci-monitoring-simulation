@@ -104,11 +104,18 @@ def test_held_baseline_constant_within_segment():
 
 # ---------- repository integrity ----------
 def test_released_csvs_load_and_nonempty():
-    csvs = sorted((ROOT / "data").glob("*.csv"))
-    assert len(csvs) >= 9
-    for csv in csvs:
+    # the nine per-run sweep CSVs each carry a 'seed' column
+    sweeps = sorted((ROOT / "data").glob("sweep*.csv"))
+    assert len(sweeps) >= 9
+    for csv in sweeps:
         df = pd.read_csv(csv)
         assert len(df) > 0 and "seed" in df.columns
+    # supplementary analysis outputs (Morris screening, CI-vs-power) load and are
+    # non-empty; they are not sweep files and need not carry a 'seed' column
+    for name in ("morris_screening.csv", "ci_vs_power.csv"):
+        p = ROOT / "data" / name
+        if p.exists():
+            assert len(pd.read_csv(p)) > 0
 
 
 def test_shared_modules_do_not_drift():
