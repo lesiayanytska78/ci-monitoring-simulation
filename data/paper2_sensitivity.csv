@@ -1,0 +1,6 @@
+parameter,mu_star_latency_min,sigma_latency_min,mu_star_fa_per_h,sigma_fa_per_h
+cusum_k_frac,30.09,22.31,3.0959,3.1853
+cusum_h_warn,13.75,4.45,1.5886,2.2626
+post_anchor_min,8.44,11.8,0.0,0.0
+health_gate_frac,37.17,60.55,0.0683,0.1923
+anchor_period_min,55.19,57.08,0.31,0.6604
