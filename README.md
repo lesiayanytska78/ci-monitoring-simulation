@@ -9,7 +9,7 @@
 
 Simulation code, raw sweep data, and figure-generation scripts for the paper:
 
-> **Yanytska, L. (2026).** *Detection limits of MES-embedded carbon-intensity monitoring for energy anomalies: a calibrated simulation study in machining-style processes.* Manuscript in preparation.
+> **Yanytska, L. (2026).** *Detection limits of MES-embedded carbon-intensity monitoring for energy anomalies: a calibrated simulation study in machining-style processes.* The International Journal of Advanced Manufacturing Technology (accepted, in press). Manuscript JAMT-D-26-03924.
 
 This repository reproduces every figure in the paper from the 4,356 raw simulation runs released in `data/`.
 
@@ -225,8 +225,9 @@ If you use this code or data, please cite the paper and the archived repository:
   title   = {Detection limits of MES-embedded carbon-intensity monitoring for energy anomalies:
              a calibrated simulation study in machining-style processes},
   author  = {Yanytska, Lesia},
+  journal = {The International Journal of Advanced Manufacturing Technology},
   year    = {2026},
-  note    = {Manuscript in preparation}
+  note    = {In press; manuscript JAMT-D-26-03924}
 }
 
 @software{yanytska2026code,
