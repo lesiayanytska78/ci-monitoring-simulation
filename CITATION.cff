@@ -6,8 +6,8 @@ authors:
     given-names: Lesia
     affiliation: "Luxoft USA Inc., Chicago, IL, USA"
     orcid: "https://orcid.org/0009-0007-1728-8599"
-version: 2.2.5
-date-released: 2026-07-01
+version: 2.2.6
+date-released: 2026-07-08
 license: MIT
 doi: "10.5281/zenodo.21118495"
 repository-code: "https://github.com/lesiayanytska78/ci-monitoring-simulation"
