@@ -3,7 +3,7 @@
 [![tests](https://github.com/lesiayanytska78/ci-monitoring-simulation/actions/workflows/tests.yml/badge.svg)](https://github.com/lesiayanytska78/ci-monitoring-simulation/actions/workflows/tests.yml)
 [![PyPI](https://img.shields.io/pypi/v/ci-monitoring-simulation.svg)](https://pypi.org/project/ci-monitoring-simulation/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
-[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.21118495.svg)](https://doi.org/10.5281/zenodo.21118495)
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.21268863.svg)](https://doi.org/10.5281/zenodo.21268863)
 [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/lesiayanytska78/ci-monitoring-simulation/blob/main/notebooks/quickstart.ipynb)
 [![Architecture](https://img.shields.io/badge/architecture-interactive_diagram-1f6feb)](https://lesiayanytska78.github.io/ci-monitoring-simulation/architecture.html)
 
@@ -236,12 +236,12 @@ If you use this code or data, please cite the paper and the archived repository:
   year      = {2026},
   publisher = {Zenodo},
   version   = {v2.2.5},
-  doi       = {10.5281/zenodo.21118495},
-  url       = {https://doi.org/10.5281/zenodo.21118495}
+  doi       = {10.5281/zenodo.21268863},
+  url       = {https://doi.org/10.5281/zenodo.21268863}
 }
 ```
 
-This release is permanently archived on Zenodo: **DOI [10.5281/zenodo.21118495](https://doi.org/10.5281/zenodo.21118495)**. A machine-readable `CITATION.cff` is included at the repository root.
+This release is permanently archived on Zenodo: **DOI [10.5281/zenodo.21268863](https://doi.org/10.5281/zenodo.21268863)**. A machine-readable `CITATION.cff` is included at the repository root.
 
 ---
 
