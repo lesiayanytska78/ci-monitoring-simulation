@@ -1,5 +1,7 @@
 # paper3_agentic_governance
 
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/lesiayanytska78/ci-monitoring-simulation/blob/main/paper3_agentic_governance/notebooks/paper3_governance_demo.ipynb)
+
 Proof-of-concept for **Paper 3 — "Measurement-bounded autonomy: characterized
 detection limits as the governance boundary for carbon-intelligent energy agents
 in manufacturing execution systems."**
