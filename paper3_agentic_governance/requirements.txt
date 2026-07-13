@@ -1,0 +1,6 @@
+# Runtime
+PyYAML>=6.0
+# numpy is used by surface interpolation helpers if extended; core runs stdlib-only
+numpy>=1.24
+# Dev / test
+pytest>=7.0

@@ -1,0 +1,55 @@
+# contract/fault_registry.yaml
+# Fault archetypes from Paper 1, Table 3.  Baseline spindle power P_b = 3.4 kW.
+# severity_frac = Delta / P_b ; onset_ratio rho = tau_onset / W_b (window W_b).
+# These drive the EX-ANTE standing grants: each class is mapped onto the
+# characterized surface offline to yield a standing sensing tier per detector.
+#
+# NOTE: values transcribed from the Paper 3 spec / Fig-2 markers; reconcile
+# against Paper 1 Table 3 in the archive before publication.
+
+baseline_power_kw: 3.4
+adaptive_window_s: 3600          # W_b (nominal)
+
+archetypes:
+  - name: compressed_air_leak
+    channel: pneumatic
+    delta_kw: 1.5
+    severity_frac_nominal: 0.44
+    severity_frac_range: [0.40, 0.48]
+    onset_profile: ramp
+    onset_s: 120
+    onset_ratio_nominal: 0.033    # 120 / 3600
+    note: acute, above floor -> characterized-reliable under D0
+
+  - name: machine_left_on
+    channel: whole_machine
+    delta_kw: 0.9
+    severity_frac_nominal: 0.26
+    severity_frac_range: [0.24, 0.28]
+    onset_profile: step
+    onset_s: 30
+    onset_ratio_nominal: 0.033    # near-step; sub-floor severity
+    note: sub-floor severity; detectability limited even at fast onset
+
+  - name: coolant_pump_fault
+    channel: coolant
+    delta_kw: 1.2
+    severity_frac_nominal: 0.35
+    severity_frac_range: [0.33, 0.37]
+    onset_profile: step
+    onset_s: 30
+    onset_ratio_nominal: 0.033
+    note: step onset, moderate severity
+
+  - name: tool_wear
+    channel: spindle
+    delta_kw: 0.8
+    severity_frac_nominal: 0.24
+    severity_frac_range: [0.20, 0.28]
+    onset_profile: slow_ramp
+    onset_s: 3600
+    onset_ratio_nominal: 1.0      # 3600 / 3600
+    note: >
+      slow onset AND sub-floor severity -> STANDING-BLIND under D0
+      (mandatory scheduled human/inspection pathway); moves to
+      characterized-reliable under D2 (event-anchored).

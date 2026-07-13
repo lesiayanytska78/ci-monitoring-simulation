@@ -1,0 +1,46 @@
+cff-version: 1.2.0
+title: "paper3_agentic_governance — Measurement-Bounded Autonomy for Energy Agents (PoC)"
+message: "If you use this software, please cite both the software (via the Zenodo concept DOI below) and the associated papers."
+type: software
+authors:
+  - given-names: Lesia
+    family-names: Yanytska
+    affiliation: "Luxoft USA Inc."
+    orcid: "https://orcid.org/0009-0007-1728-8599"
+repository-code: "https://github.com/lesiayanytska78/ci-monitoring-simulation"
+license: MIT
+version: "3.0.0"
+# Zenodo: released as a new version under the shared concept record (papers 1-3 monorepo).
+#   concept DOI (all versions):        10.5281/zenodo.20634187   <- cite this in general
+#   latest published version (v2.2.6): 10.5281/zenodo.21268863
+#   mint the paper-3 version DOI (v3.0.0) at release and cite that specific version too.
+identifiers:
+  - type: doi
+    value: "10.5281/zenodo.20634187"
+    description: "Concept DOI — resolves to the latest version of the papers 1-3 artifact record"
+  - type: doi
+    value: "10.5281/zenodo.21268863"
+    description: "Version DOI for v2.2.6 (latest published snapshot)"
+references:
+  - type: article
+    title: "Detection limits of MES-embedded carbon-intensity monitoring for energy anomalies: a calibrated simulation study in machining-style processes"
+    authors:
+      - given-names: Lesia
+        family-names: Yanytska
+    doi: 10.1007/s00170-026-18713-2
+    journal: "International Journal of Advanced Manufacturing Technology"
+    year: 2026
+  - type: data
+    title: "CNC machining dataset (geometry, NC code, high-frequency energy)"
+    authors:
+      - family-names: Brillinger
+        given-names: Markus
+    doi: 10.17632/gtvvwmz7r7.2
+    license: CC-BY-4.0
+    year: 2025
+  - type: data
+    title: "Carbon Intensity API (national, half-hourly)"
+    authors:
+      - name: "National Energy System Operator (NESO)"
+    url: "https://carbonintensity.org.uk"
+    license: CC-BY-4.0

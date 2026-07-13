@@ -1,0 +1,28 @@
+version = 1
+
+# First-party data (detectability surfaces derived from the author's Papers 1-2
+# characterization campaigns) — CC BY 4.0.
+[[annotations]]
+path = "contract/data/**.csv"
+SPDX-FileCopyrightText = "2026 Lesia Yanytska"
+SPDX-License-Identifier = "CC-BY-4.0"
+
+# Docs, config, and metadata — MIT (same as code).
+[[annotations]]
+path = [
+  "**.md",
+  "**.yaml",
+  "**.toml",
+  "**.cff",
+  "**.txt",
+  "requirements.txt",
+  ".gitignore",
+]
+SPDX-FileCopyrightText = "2026 Lesia Yanytska"
+SPDX-License-Identifier = "MIT"
+
+# Generated grid-CI snapshot, when committed deliberately, carries NESO's CC BY 4.0.
+[[annotations]]
+path = "env/data/*.json"
+SPDX-FileCopyrightText = "National Energy System Operator (NESO), via the Carbon Intensity API"
+SPDX-License-Identifier = "CC-BY-4.0"
