@@ -114,6 +114,20 @@ class AnchoredMonitorConfig:
     cusum_h_warn: float = 0.40     # decision interval for a WARNING
     cusum_h_crit: float = 1.20     # decision interval for a CRITICAL
 
+    # --- Revision options (Paper 2 major revision) ---
+    # Two-sided CUSUM: also run a mirror negative-side accumulator so the detector
+    # can catch *downward* deviations (sensor under-read, efficiency-mask, meter
+    # bias). The default remains one-sided, which is the correct, more powerful
+    # choice for the positive-energy-fault target (§4.11). When enabled the alert
+    # level is driven by max(S_plus, S_minus).
+    cusum_two_sided: bool = False
+    # Accumulator treatment across NON-PRODUCTION gaps (§4.12):
+    #   "reset" : S -> 0 at every idle sample (deployed default; discards evidence)
+    #   "hold"  : freeze S across the gap, resume on next production sample
+    #   "decay" : forget S with a half-life (decay_halflife_min) during idle
+    gap_strategy: str = "reset"
+    decay_halflife_min: float = 30.0
+
 
 # ----------------------------------------------------------------------
 # Anchor schedule + held baseline
@@ -222,20 +236,35 @@ def detect_anchored(obs: pd.DataFrame, cfg: AnchoredMonitorConfig) -> pd.DataFra
         with np.errstate(divide="ignore", invalid="ignore"):
             frac_excess = np.where(valid & np.isfinite(B) & (B > 0),
                                    (ci - B) / B, 0.0)
-        S = np.zeros(len(ci))
+        dt_min = cfg.sampling_interval_seconds / 60.0
+        decay = 0.5 ** (dt_min / max(cfg.decay_halflife_min, 1e-6))
+        S = np.zeros(len(ci))       # positive-side accumulator
+        Sn = np.zeros(len(ci))      # negative-side accumulator (two-sided only)
         s = 0.0
+        sn = 0.0
         for i in range(len(ci)):
             if valid[i] and np.isfinite(B[i]) and B[i] > 0:
                 s = max(0.0, s + frac_excess[i] - cfg.cusum_k_frac)
+                if cfg.cusum_two_sided:
+                    sn = max(0.0, sn - frac_excess[i] - cfg.cusum_k_frac)
             else:
-                s = 0.0          # reset accumulator outside production
+                # accumulator treatment across non-production gaps (§4.12)
+                if cfg.gap_strategy == "hold":
+                    pass                       # freeze and resume
+                elif cfg.gap_strategy == "decay":
+                    s *= decay; sn *= decay     # forget with a half-life
+                else:
+                    s = 0.0; sn = 0.0           # "reset" (deployed default)
             S[i] = s
+            Sn[i] = sn
+        Seff = np.maximum(S, Sn) if cfg.cusum_two_sided else S
         lvl = np.zeros(len(ci), dtype=int)
-        lvl[S >= cfg.cusum_h_warn] = 1
-        lvl[S >= cfg.cusum_h_crit] = 2
+        lvl[Seff >= cfg.cusum_h_warn] = 1
+        lvl[Seff >= cfg.cusum_h_crit] = 2
         obs["threshold_kg_per_piece"] = B * (1.0 + cfg.cusum_k_frac)  # for plotting
         obs["over_threshold"] = (lvl >= 1)
         obs["cusum"] = S
+        obs["cusum_neg"] = Sn
         obs["alert_level"] = lvl
 
     else:

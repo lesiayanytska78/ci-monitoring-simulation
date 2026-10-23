@@ -1,0 +1,6 @@
+regime,P_b_kw,predicted_k_Pb,empirical_50pct_floor
+real substrate,3.5,0.35,0.32
+synthetic 60 pcs/h,5.05,0.505,0.512
+throughput 40 pcs/h,5.05,0.505,0.512
+throughput 80 pcs/h,5.05,0.505,0.512
+higher aux (+2 kW),7.05,0.705,0.7

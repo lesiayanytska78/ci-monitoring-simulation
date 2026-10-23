@@ -1,0 +1,4 @@
+set,detection_at_point,fa_per_h,median_latency_min
+calibration,1.0,0.0016,42.0
+validation,1.0,0.0016,42.0
+stability_frac_k0.10,0.99,,

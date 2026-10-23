@@ -1,0 +1,9 @@
+config,fa_count,production_hours,rate_per_h,poisson_lo,poisson_hi
+D0_deployed_sim,0,2447.5,0.0,0.0,0.0015
+D2_anchored_cusum_sim,6,2447.5,0.0025,0.0009,0.0053
+D2_periodic_sim,27,2447.5,0.011,0.0073,0.0161
+D2_periodic_gated_sim,30,2447.5,0.0123,0.0083,0.0175
+C1_rolling_cusum_sim,3,2447.5,0.0012,0.0003,0.0036
+C2_model_residual_sim,0,2447.5,0.0,0.0,0.0015
+D0_deployed_real,0,1223.0,0.0,0.0,0.003
+D2_anchored_cusum_real,35,1223.0,0.0286,0.0199,0.0398

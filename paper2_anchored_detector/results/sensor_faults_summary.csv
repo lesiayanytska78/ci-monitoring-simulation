@@ -1,0 +1,10 @@
+part,mode,mag,fa_prob,lo,hi,det
+clean,bias,0.02,0.125,0.055,0.261,
+clean,bias,0.05,0.425,0.285,0.578,
+clean,bias,0.1,0.9,0.769,0.96,
+clean,drift,0.02,0.975,0.871,0.996,
+clean,drift,0.05,1.0,0.912,1.0,
+clean,drift,0.1,1.0,0.912,1.0,
+fault,frozen_0.0,0.0,,0.004,0.129,0.025
+fault,dropout_0.1,0.1,,0.912,1.0,1.0
+fault,dropout_0.3,0.3,,0.912,1.0,1.0

@@ -43,9 +43,40 @@ Each `run_*` script reuses the parent repo's Module 1–5 (copied here so the sc
 run with no path setup) plus `monitoring_anchored.py`, and writes its summary CSV to
 `results/`. Pre-computed summaries and figures are included.
 
-> **Note on `sensitivity.py`:** this is the companion paper's (Paper 1) sweep harness for the *deployed* rule-based detector; it is included only because the analysis scripts import the Module 1–5 package. It does **not** characterise the proposed detector. The proposed detector's own parameters (anchor cadence, post-anchor window, CUSUM slack `k`, decision interval `h`, and the health-gate fraction) are not swept here — that sensitivity analysis is identified as future work in the manuscript.
->
 > **Note on the ablation comparator `C2`:** in `run_paper2_comparators.py`, `C2` is a fixed *global-mean* reference (the median healthy CI, a single calibration constant). It is a deliberately minimal fixed reference used to test whether a fixed reference *per se* defeats inertia; it is **not** a feature-conditioned, Bhinge-style model-based residual, and should not be read as one.
+
+## Major-revision robustness programme (Paper 2, revised)
+
+The revised manuscript (§3.3–§3.4, §4.4, §4.7–§4.14) adds a statistical re-analysis
+and an eleven-part robustness programme. Each experiment has a dedicated script that
+imports a shared harness (`revision_common.py`) so the operating point (k = 0.10,
+h = 1.0) and sensor model are identical to the headline runs. Every script writes a
+`*_summary.csv`; committed copies are in `results/`, and the figures are in `figures/`.
+
+| Script | §  | Produces | What it shows |
+|---|---|---|---|
+| `recompute_intervals.py` | 3.4 | `results/*_summary_binom.csv`, `false_alarm_poisson.csv` | Wilson + Clopper–Pearson detection intervals, exact (Garwood) Poisson false-alarm intervals (replacing the degenerate `[100,100]` bootstrap) |
+| `redraw_figs.py` | 3.4 | `figures/fig_paper2_*_wilson.png` | headline figures redrawn with Wilson error bars |
+| `run_calibration_independence.py` | 3.3 | `calibration_independence_summary.csv` | disjoint calibration/validation seed pools; 300-resample operating-point stability |
+| `run_transfer_diagnostic.py` | 3.3 / 4.6 | `transfer_diagnostic_summary.csv` | real-substrate h-sweep → the domain-robust point (k = 0.10, h = 2.0) |
+| `run_floor_scaling.py` | 4.4 | `floor_scaling_summary.csv` | detection floor Δ = k·P̄_b across regimes (invariant to throughput, scales with P̄_b) |
+| `run_cadence_gate.py` | 4.7 | `cadence_gate_summary.csv`, `cadence_gate_decomp.csv` | targeted 2-D cadence×gate; variance decomposition (gate-dominated, interaction secondary) |
+| `run_regime_change.py` | 4.8 | `regime_change_summary.csv` | legitimate regime changes: the two faces of the reference |
+| `run_contaminated_anchor.py` | 4.9 | `contaminated_anchor_summary.csv` | biased-anchor sensitivity (loud low-bias / silent high-bias; the gate corrects < gate-fraction, preserves above) |
+| `run_fault_forms.py` | 4.10 | `fault_forms_summary.csv` | six fault morphologies + randomised trajectories |
+| `run_two_sided.py` | 4.11 | `two_sided_summary.csv` | one-sided CUSUM is blind to negative deviations; the two-sided variant recovers them |
+| `run_interruptions.py` | 4.12 | `interruptions_summary.csv` | reset / hold / decay of the accumulator across production gaps |
+| `run_regen_treatment.py` | 4.13 | `regen_treatment_summary.csv` | clip / net / half negative-power treatments (detection treatment-invariant) |
+| `run_sensor_faults.py` | 4.14 | `sensor_faults_summary.csv` | bias / drift / frozen / dropout on the CI channel |
+
+Two detector options were added to `monitoring_anchored.py` for the revision (both
+default-off, so the headline results are unchanged):
+
+- `cusum_two_sided=True` — a mirror negative-side accumulator for downward deviations (§4.11).
+- `gap_strategy="reset"|"hold"|"decay"` (`decay_halflife_min`) — accumulator treatment across non-production gaps (§4.12).
+
+The new fault morphologies (`step_ramp`, `intermittent`, `oscillatory`,
+`partial_recovery`) are added to `anomaly_model.py` (§4.10).
 
 ## Real-data validation (Brillinger et al. 2025) — license note
 
@@ -69,7 +100,8 @@ regenerative-braking transients to ~−20 kW, and noise within the modelled rang
 ## Headline results (semi-synthetic substrate, 2 kW unless noted)
 
 - At onset-ratio 1.0, the deployed detector falls to **24% [18–30]** detection while
-  the proposed detector holds **100% [100–100]**, at a false-alarm rate ≤ deployed.
+  the proposed detector holds **100% (95% Wilson CI 98.1–100%)**, at a false-alarm rate
+  of 0.0025/h (6 warning-starts over 2,447.5 production-h; 95% Poisson CI 0.0009–0.0053).
 - The ablation shows a rolling-median CUSUM (no anchor) still collapses (32% at ratio
   2.0): the **fixed reference**, not the CUSUM, is the mechanism — and a model-based
   residual reference works equally well, covering both design responses named in the
