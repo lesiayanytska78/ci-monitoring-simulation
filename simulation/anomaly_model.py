@@ -66,10 +66,19 @@ class AnomalySpec:
     onset_hour: float                 # when the fault starts (hour of day, 0-24)
     duration_minutes: float           # how long it persists before being caught
     magnitude_kw: float               # excess power added (additive)
-    onset_profile: str = "step"       # "step" or "ramp"
-    onset_ramp_seconds: float = 60.0  # ramp duration if profile=="ramp"
+    onset_profile: str = "step"       # see _envelope for the full list
+    onset_ramp_seconds: float = 60.0  # ramp duration if profile=="ramp"/"step_ramp"
     affects: str = "machine"          # "machine" (aux base) or "spindle"
     label: str = "anomaly"            # for plotting / identification
+    # --- Extra fault morphologies (Paper 2 major revision, §4.10) ---
+    # "step_ramp"        : immediate step to half magnitude, then ramp to full
+    # "intermittent"     : on/off square wave at magnitude (period/duty below)
+    # "oscillatory"      : magnitude * 0.5*(1 - cos), range [0, magnitude]
+    # "partial_recovery" : ramp up to full, then decline to recovery_frac*magnitude
+    intermittent_period_min: float = 20.0   # full on+off cycle
+    intermittent_duty: float = 0.5          # fraction of the cycle that is "on"
+    oscillatory_period_min: float = 30.0
+    recovery_frac: float = 0.5              # partial_recovery: residual fraction
 
 
 @dataclass
@@ -140,12 +149,40 @@ def _envelope(t_seconds: np.ndarray, spec: AnomalySpec) -> np.ndarray:
     env = np.zeros_like(t_seconds, dtype=float)
     active = (t_seconds >= t_start) & (t_seconds < t_end)
 
+    elapsed = np.where(active, t_seconds - t_start, 0.0)
+    dur_s = max(spec.duration_minutes * 60.0, 1e-6)
+    M = spec.magnitude_kw
+
     if spec.onset_profile == "step":
-        env[active] = spec.magnitude_kw
+        env[active] = M
     elif spec.onset_profile == "ramp":
-        elapsed = np.where(active, t_seconds - t_start, 0.0)
         ramp = np.clip(elapsed / max(spec.onset_ramp_seconds, 1e-6), 0.0, 1.0)
-        env = np.where(active, spec.magnitude_kw * ramp, 0.0)
+        env = np.where(active, M * ramp, 0.0)
+    elif spec.onset_profile == "step_ramp":
+        # a small immediate step (0.2 M) followed by a slow drift to full magnitude
+        # over the whole fault duration -- a tool that chips then wears. Mostly a
+        # gradual form, so the deployed relative-threshold detector misses it.
+        ramp = np.clip(elapsed / dur_s, 0.0, 1.0)
+        env = np.where(active, M * (0.2 + 0.8 * ramp), 0.0)
+    elif spec.onset_profile == "intermittent":
+        period_s = max(spec.intermittent_period_min * 60.0, 1e-6)
+        phase = np.mod(elapsed, period_s) / period_s
+        on = active & (phase < spec.intermittent_duty)
+        env[on] = M
+    elif spec.onset_profile == "oscillatory":
+        period_s = max(spec.oscillatory_period_min * 60.0, 1e-6)
+        osc = 0.5 * (1.0 - np.cos(2.0 * np.pi * elapsed / period_s))  # [0,1]
+        env = np.where(active, M * osc, 0.0)
+    elif spec.onset_profile == "partial_recovery":
+        # ramp up to full over the first third of the fault, then decline
+        # linearly to recovery_frac*M by the end (a partially self-correcting fault)
+        up_s = dur_s / 3.0
+        frac = np.where(
+            elapsed < up_s,
+            elapsed / max(up_s, 1e-6),
+            1.0 - (1.0 - spec.recovery_frac) * np.clip((elapsed - up_s) / max(dur_s - up_s, 1e-6), 0.0, 1.0),
+        )
+        env = np.where(active, M * frac, 0.0)
     else:
         raise ValueError(f"Unknown onset_profile: {spec.onset_profile}")
     return env
